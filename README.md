@@ -1,4 +1,4 @@
-El código licenciado aquí bajo la GNU Affero General Public License, versión 3 [AGPL-3.0](http://www.gnu.org/licenses/agpl-3.0.html) ha sido desarrollado por el equipo de VibokWorks en base al código liberado por Goteo. Un resumen de las modificaciones realizadas se puede encontrar en el archivo /doc/plataforma_book-a.doc 
+El código licenciado aquí bajo la GNU Affero General Public License, versión 3 [AGPL-3.0](http://www.gnu.org/licenses/agpl-3.0.html) ha sido desarrollado por el equipo de VibokWorks en base al código liberado de Goteo.org (https://github.com/Goteo/Goteo). Un resumen de las modificaciones realizadas se puede encontrar en el archivo /doc/plataforma_book-a.doc 
 
 Se trata de una herramienta web que permite la gestión de campañas de micromecenazgo de proyectos literarios propios. Mediante el sistema también se permite gestionar la comunicación segura y distribuida con los usuarios y entre estos, administración de proyectos destacados en portada y creación de publicaciones periódiocas tipo blog, sección de FAQs y páginas estáticas. 
 
@@ -14,15 +14,15 @@ Instrucciones para la implementación:
 Hay una guía de instalación más detallada en /dov/installation_guide.txt
 Los detalles técnicos se encuentran en el archivo /doc/plataforma_book-a.doc
 
-La propiedad intelectual de la plataforma Book-a.net pertenece a 03INNOVA24H SLU  y ha sido gestionado por http://www.safecreative.org/
+La propiedad intelectual de la plataforma Book-a.net pertenece a 03INNOVA24H SLU y ha sido gestionada por http://www.safecreative.org/
 
 CREDITOS
 Desarrollo herramienta (conceptualización, arquitectura de la información, textos, programación y diseño de interface):
 Paula Alvarez, Francisco Cruz, Julián Cánaves
 
-Traducción de interface y textos: 
+Traducción de interface y textos: Crystal Weber
 
-Asesoría legal y privacidad de datos: 
+Asesoría legal y privacidad de datos: S.A.G. MEN
 
 Other code writers: Miguel Angel Sanchez
   
