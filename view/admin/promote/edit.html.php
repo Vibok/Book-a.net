@@ -18,15 +18,11 @@
  *
  */
 
-use Goteo\Library\Text,
-    Goteo\Model;
+use Base\Library\Text;
 
 $promo = $this['promo'];
-
-// proyectos disponibles
-// si tenemos ya proyecto seleccionado lo incluimos
-$projects = Model\Promote::available($promo->project);
-$status = Model\Project::status();
+$bookas = $this['bookas'];
+$status = $this['status'];
 
 ?>
 <form method="post" action="/admin/promote">
@@ -35,23 +31,13 @@ $status = Model\Project::status();
     <input type="hidden" name="id" value="<?php echo $promo->id; ?>" />
 
 <p>
-    <label for="promo-project">Proyecto:</label><br />
-    <select id="promo-project" name="project">
-        <option value="" >Seleccionar el proyecto a destacar</option>
-    <?php foreach ($projects as $project) : ?>
-        <option value="<?php echo $project->id; ?>"<?php if ($promo->project == $project->id) echo' selected="selected"';?>><?php echo $project->name . ' ('. $status[$project->status] . ')'; ?></option>
+    <label for="promo-booka">Booka:</label><br />
+    <select id="promo-booka" name="booka">
+        <option value="" >Seleccionar el Booka a destacar</option>
+    <?php foreach ($bookas as $booka) : ?>
+        <option value="<?php echo $booka->id; ?>"<?php if ($promo->booka == $booka->id) echo' selected="selected"';?>><?php echo $booka->name . ' ('. $status[$booka->status] . ')'; ?></option>
     <?php endforeach; ?>
     </select>
-</p>
-
-<p>
-    <label for="promo-name">Título:</label><span style="font-style:italic;">Máximo 20 caracteres</span><br />
-    <input type="text" name="title" id="promo-title" value="<?php echo $promo->title; ?>" size="50" maxlength="20" />
-</p>
-
-<p>
-    <label for="promo-description">Descripción:</label><span style="font-style:italic;">Máximo 100 caracteres</span><br />
-    <input type="text" name="description" id="promo-description" maxlength="100" value="<?php echo $promo->description; ?>" size="120" />
 </p>
 
 <p>

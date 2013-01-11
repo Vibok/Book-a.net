@@ -18,8 +18,7 @@
  *
  */
 
-
-namespace Goteo\Core {
+namespace Base\Core {
 
     class View extends \ArrayObject implements Resource, Resource\MIME {
         

@@ -18,14 +18,12 @@
  *
  */
 
+namespace Base\Library {
 
-namespace Goteo\Library {
-
-    use Goteo\Core\Model,
-        Goteo\Model\Project;
+    use Base\Model\Booka;
 
 	/*
-	 * Clase para realizar búsquedas de proyectos
+	 * Clase para realizar búsquedas de Bookas
 	 *
 	 */
     class Search {
@@ -42,23 +40,22 @@ namespace Goteo\Library {
             $values = array(':text'=>"%$value%");
 
             $sql = "SELECT id
-                    FROM project
+                    FROM booka
                     WHERE status > 2
-                    AND (name LIKE :text
-                        OR description LIKE :text
-                        OR motivation LIKE :text
-                        OR about LIKE :text
-                        OR goal LIKE :text
-                        OR related LIKE :text
-                        OR keywords LIKE :text
-                        OR location LIKE :text
+                    AND (name_es LIKE :text
+                        OR description_es LIKE :text
+                        OR motivation_es LIKE :text
+                        OR about_es LIKE :text
+                        OR goal_es LIKE :text
+                        OR related_es LIKE :text
+                        OR keywords_es LIKE :text
                         )
-                    ORDER BY name ASC";
+                    ORDER BY name_es ASC";
 
             try {
-                $query = Model::query($sql, $values);
+                $query = Booka::query($sql, $values);
                 foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $match) {
-                    $results[] = Project::getMedium($match->id);
+                    $results[] = Booka::getMedium($match->id);
                 }
                 return $results;
             } catch (\PDOException $e) {
@@ -69,9 +66,10 @@ namespace Goteo\Library {
         /**
          * Metodo para realizar una busqueda por parametros
          * @param array multiple $params 'category', 'location', 'reward'
+         * @param bool showall si true, muestra tambien Bookas en estado de edicion y revision
          * @return array results
          */
-		public static function params ($params) {
+		public static function params ($params, $showall = false, $limit = null) {
 
             $results = array();
             $where   = array();
@@ -79,19 +77,19 @@ namespace Goteo\Library {
 
             if (!empty($params['category'])) {
                 $where[] = 'AND id IN (
-                                    SELECT distinct(project)
-                                    FROM project_category
+                                    SELECT distinct(booka)
+                                    FROM booka_category
                                     WHERE category IN ('. implode(', ', $params['category']) . ')
                                 )';
             }
 
             if (!empty($params['location'])) {
-                $where[] = 'AND MD5(project_location) IN ('. implode(', ', $params['location']) .')';
+                $where[] = 'AND MD5(booka_location) IN ('. implode(', ', $params['location']) .')';
             }
 
             if (!empty($params['reward'])) {
                 $where[] = 'AND id IN (
-                                    SELECT DISTINCT(project)
+                                    SELECT DISTINCT(booka)
                                     FROM reward
                                     WHERE icon IN ('. implode(', ', $params['reward']) . ')
                                     )';
@@ -110,23 +108,30 @@ namespace Goteo\Library {
                 $values[':text'] = "%{$params['query']}%";
             }
 
+            
+            $minstatus = ($showall) ? '1' : '2';
+            $maxstatus = ($showall) ? '4' : '7';
+
             $sql = "SELECT id
-                    FROM project
-                    WHERE status > 2
+                    FROM booka
+                    WHERE status > $minstatus
+                    AND status < $maxstatus
                     ";
             
             if (!empty($where)) {
                 $sql .= implode (' ', $where);
             }
 
-            $sql .= "ORDER BY name ASC";
-
-//            echo "$sql<br />";
+            $sql .= " ORDER BY name ASC";
+            // Limite
+            if (!empty($limit) && \is_numeric($limit)) {
+                $sql .= " LIMIT $limit";
+            }
 
             try {
-                $query = Model::query($sql, $values);
+                $query = Booka::query($sql, $values);
                 foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $match) {
-                    $results[] = Project::getMedium($match->id);
+                    $results[] = Booka::getMedium($match->id);
                 }
                 return $results;
             } catch (\PDOException $e) {

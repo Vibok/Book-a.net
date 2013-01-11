@@ -18,10 +18,9 @@
  *
  */
 
-use Goteo\Library\Text,
-    Goteo\Core\ACL;
+use Base\Library\Text,
+    Base\Core\ACL;
 
-$translator = ACL::check('/translate') ? true : false;
 ?>
 <div class="widget board">
     <?php if (!empty($this['templates'])) : ?>
@@ -30,8 +29,7 @@ $translator = ACL::check('/translate') ? true : false;
             <tr>
                 <th><!-- Editar --></th>
                 <th>Plantilla</th>
-                <th>Descripción</th>
-                <th><!-- traducir --></th>
+                <th>Propósito</th>
             </tr>
         </thead>
         <tbody>
@@ -40,9 +38,6 @@ $translator = ACL::check('/translate') ? true : false;
                 <td><a href="/admin/templates/edit/<?php echo $template->id; ?>">[Editar]</a></td>
                 <td><?php echo $template->name; ?></td>
                 <td><?php echo $template->purpose; ?></td>
-                <?php if ($translator) : ?>
-                <td><a href="/translate/template/edit/<?php echo $template->id; ?>" >[Traducir]</a></td>
-                <?php endif; ?>
             </tr>
             <?php endforeach; ?>
         </tbody>

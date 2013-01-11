@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,11 +18,10 @@
  *
  */
 
-use Goteo\Library\Text;
+use Base\Library\Text;
 
 ?>
 <div class="widget board">
-    <!-- superform -->
     <form action="<?php echo $this['form']['action']; ?>" method="post" enctype="multipart/form-data">
         <dl>
             <?php foreach ($this['form']['fields'] as $Id=>$field) : ?>

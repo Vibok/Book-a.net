@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -17,17 +17,17 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
-	use Goteo\Library\Text,
-			Goteo\Model\Blog\Post;
-			$allow = Post::allowed($this['post']);
-			$level = (int) $this['level'] ?: 3;
+use Base\Library\Text,
+    Base\Model\Post;
+
+$post = $this['post'];
 ?>
-<?php if ($allow == 1) : ?>
+<?php if ($post->allow) : ?>
 <script type="text/javascript">
 	jQuery(document).ready(function ($) { 
 	    //change div#preview content when textarea lost focus
 		$("#message").blur(function(){
-			$("#preview").html($("#message").val());
+			$("#preview").html($("#message").val().replace(/\n/g, "<br />"));
 		});
 		
 		//add fancybox on #a-preview click
@@ -36,24 +36,31 @@
 			'transitionIn'		: 'none',
 			'transitionOut'		: 'none'
 		});
+        
+        <?php if (empty($_SESSION['user'])) : ?>
+        $("#message").focus(function () {
+            $("#advice").show();            
+        });
+        <?php endif; ?>
 	});
 </script>
-<?php if (!empty($_SESSION['user'])) : ?>
-<div class="widget blog-comment">
-    <h<?php echo $level ?> class="title"><?php echo Text::get('blog-send_comment-header'); ?></h<?php echo $level ?>>
-    <form method="post" action="/message/post/<?php echo $this['post']; ?>/<?php echo $this['project']; ?>">
-	    <div id="bocadillo"></div>
-        <textarea id="message" name="message" cols="50" rows="5"></textarea>
-        <a target="_blank" id="a-preview" href="#preview" class="preview">&middot;<?php echo Text::get('regular-preview'); ?></a>
-        <div style="display:none">
-        	<div id="preview" style="width:400px;height:300px;overflow:auto;">
-                    
-                </div>
-        </div>
-        <button class="green" type="submit"><?php echo Text::get('blog-send_comment-button'); ?></button>
-    </form>
-</div>
-<?php endif; ?>
+
+<form method="post" action="/message/post/<?php echo $post->id; ?>">
+    <div id="send-msg" class="activable">
+        <h5 class="ct1 upcase ft2 fs-S"><?php echo Text::get('blog-send_comment-header'); ?></h5>
+            <textarea id="message" name="message" cols="50" rows="5" style="width: 98%;"></textarea>
+            <a target="_blank" id="a-preview" href="#preview" class="preview ct2 wshadow"><?php echo Text::get('regular-preview'); ?></a>
+            <div style="display:none">
+                <div id="preview" class="ft3" style="width:400px;height:300px;overflow:auto;">
+
+                    </div>
+            </div>
+    </div>
+    <div class="hr" style="margin:20px 0;"><hr /></div>
+
+    <button class="std-btn" type="submit" style="float:right;"<?php if (empty($_SESSION['user'])) echo ' disabled="disabled"'; ?>><?php echo Text::get('blog-send_comment-button'); ?></button>
+
+</form>
 <?php else : ?>
     <p><?php echo Text::get('blog-comments_no_allowed'); ?></p>
 <?php endif; ?>

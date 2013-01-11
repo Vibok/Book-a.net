@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,13 +18,12 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+    use Base\Core\Error,
+        Base\Model;
 
-    use Goteo\Core\Error,
-        Goteo\Model;
-
-    class Image extends \Goteo\Core\Controller {
+    class Image extends \Base\Core\Controller {
 
         public function index($id, $width = 200, $height = 200, $crop = false) {
             if ($image = Model\Image::get($id)) {

@@ -18,23 +18,38 @@
  *
  */
 
+namespace Base\Model {
 
-namespace Goteo\Model {
+    use \Base\Model\Booka\Media,
+        \Base\Model\Image,
+        \Base\Model\Booka,
+        \Base\Model\User,
+        \Base\Library\Text,
+        \Base\Library\Check,
+        \Base\Library\Advice;
 
-    use Goteo\Model\Project\Media,
-        Goteo\Model\Image,
-        Goteo\Library\Check;
-
-    class Post extends \Goteo\Core\Model {
+    class Post extends \Base\Core\Model {
 
         public
             $id,
             $title,
+            $clr_title,
+            $subtitle,
             $text,
             $image,
-            $gallery = array(), // array de instancias image de post_image
+            $author,
             $media,
-            $order;
+            $legend,
+            $date,
+            $url,
+            $publish,
+            $home,
+            $footer,
+            $booka, // booka asociado a la noticia
+            $tags = array(),
+            $gallery = array(), // array de instancias image de post_image
+            $num_comments = 0,
+            $comments = array();
 
         /*
          *  Devuelve datos de una entrada
@@ -42,124 +57,226 @@ namespace Goteo\Model {
         public static function get ($id) {
                 $query = static::query("
                     SELECT
-                        post.id as id,
-                        IFNULL(post_lang.title, post.title) as title,
-                        IFNULL(post_lang.text, post.text) as `text`,
-                        post.blog as blog,
-                        post.image as image,
-                        post.media as `media`,
+                        *,
                         DATE_FORMAT(post.date, '%d | %m | %Y') as fecha,
-                        post.order as `order`
+                        IFNULL(title_".\LANG." , title_es) as title,
+                        IFNULL(text_".\LANG."  , text_es) as text,
+                        IFNULL(media_".\LANG." , media_es) as media,
+                        IFNULL(legend_".\LANG.", legend_es) as legend
                     FROM    post
-                    LEFT JOIN post_lang
-                        ON  post_lang.id = post.id
-                        AND post_lang.lang = :lang
                     WHERE post.id = :id
-                    ", array(':id' => $id, ':lang'=>\LANG));
+                    ", array(':id' => $id));
 
                 $post = $query->fetchObject(__CLASS__);
+
+                // titulo sin (sobre)saltos :P
+                $post->clr_title = str_replace('<br />', ' ', $post->title);
                 
+                // video
+                if (isset($post->media)) {
+                    $post->media = new Media($post->media);
+                }
+
                 // galeria
                 $post->gallery = Image::getAll($id, 'post');
                 $post->image = $post->gallery[0];
+
+                $post->comments = Post\Comment::getAll($id);
+                $post->num_comments = count($post->comments);
                 
-                $post->media = new Media($post->media);
+                $post->user = (!empty($post->author)) ? User::getMini($post->author) : User::getMini('booka');
+
+                //tags
+                $post->tags = Post\Tag::getAll($id);
+
+                if (!empty($post->booka)) {
+                    $post->bookaData = Booka::getMini($post->booka);
+                }
+                // autor
+                if (!empty($post->author)) $post->user = User::getMini($post->author);
 
                 return $post;
-
         }
 
         /*
-         * Lista de entradas
+         *  Devuelve datos mínimos de una entrada
          */
-        public static function getAll ($position = 'home', $blog = 1) {
+        public static function getMini ($id) {
+                $query = static::query("
+                    SELECT
+                        IFNULL(title_".\LANG." , title_es) as title
+                    FROM    post
+                    WHERE post.id = :id
+                    ", array(':id' => $id));
 
-            if (!in_array($position, array('home', 'footer'))) {
-                $position = 'home';
-            }
+                $post = $query->fetchObject(__CLASS__);
+
+                // titulo sin (sobre)saltos :P
+                $post->clr_title = str_replace('<br />', ' ', $post->title);
+                
+                // imagen
+                $post->image = Image::getFirst($id, 'post');
+
+                return $post;
+        }
+
+        /*
+         * Lista de entradas filtradas
+         * de mas nueva a mas antigua
+         * para gestion y para publicacion
+         */
+        public static function getAll ($filters = array(), $published = true, $limit = null) {
 
             $list = array();
 
+            $sqlOrder = "
+                ORDER BY post.date DESC, post.id DESC
+                ";
+
             $sql = "
                 SELECT
-                    post.id as id,
-                    post.blog as blog,
-                    IFNULL(post_lang.title, post.title) as title,
-                    IFNULL(post_lang.text, post.text) as `text`,
-                    post.image as `image`,
-                    post.media as `media`,
-                    post.order as `order`,
-                    DATE_FORMAT(post.date, '%d-%m-%Y') as date,
+                    *,
                     DATE_FORMAT(post.date, '%d | %m | %Y') as fecha,
-                    post.publish as publish,
-                    post.home as home,
-                    post.footer as footer
+                    IFNULL(title_".\LANG." , title_es) as title,
+                    IFNULL(text_".\LANG."  , text_es) as text,
+                    IFNULL(media_".\LANG." , media_es) as media,
+                    IFNULL(legend_".\LANG.", legend_es) as legend
                 FROM    post
-                LEFT JOIN post_lang
-                    ON  post_lang.id = post.id
-                    AND post_lang.lang = :lang
-                WHERE   post.blog = $blog
-                AND     post.$position = 1
-                ORDER BY `order` ASC, title ASC
+                WHERE id IS NOT NULL
                 ";
+
+            if (!empty($filters['tag'])) {
+                $sql .= " AND post.id IN (SELECT post FROM post_tag WHERE tag = :tag)
+                ";
+                $values[':tag'] = $filters['tag'];
+            }
+
+            if (!empty($filters['collection'])) {
+                $sql .= " AND post.booka IN (SELECT id FROM booka WHERE collection = :collection)
+                ";
+                $values[':collection'] = $filters['collection'];
+            }
+
+            if (!empty($filters['author'])) {
+                $sql .= " AND post.author = :author
+                ";
+                $values[':author'] = $filters['author'];
+            }
+
+            // solo las publicadas
+            if ($published || $filters['show'] == 'published') {
+                $sql .= " AND post.publish = 1
+                ";
+            }
+
+            // segun top, home, footer
+            if (!empty($filters['show']) && in_array($filters['show'], array('top', 'home', 'footer'))) {
+                $sql .= " AND post.{$filters['show']} = 1
+                    ";
+                $sqlOrder = "ORDER BY post.order ASC
+                    ";
+            }
+
+            // segun estado del booka asociado
+            // en campaña y financiados (estado 3 y 4)
+            if ($filters['show'] == 'allow') {
+                $sql .= " AND post.booka IN (SELECT id FROM booka WHERE status IN (3, 4))
+                ";
+            }
+
+            // producidos (estado 5)
+            if ($filters['show'] == 'ateca') {
+                $sql .= " AND post.booka IN (SELECT id FROM booka WHERE status = 5)
+                ";
+            }
+
+            // disponibles (estado 6)
+            if ($filters['show'] == 'alacarte') {
+                $sql .= " AND post.booka IN (SELECT id FROM booka WHERE status = 6)
+                ";
+            }
+
+            $sql .= $sqlOrder;
             
-            $query = static::query($sql, array(':lang'=>\LANG));
-                
+            if (!empty($limit)) {
+                $sql .= " LIMIT $limit";
+            }
+
+            $query = static::query($sql, $values);
+
             foreach ($query->fetchAll(\PDO::FETCH_CLASS, __CLASS__) as $post) {
                 // galeria
                 $post->gallery = Image::getAll($post->id, 'post');
                 $post->image = $post->gallery[0];
 
-                $post->media = new Media($post->media);
+                // video
+                if (isset($post->media)) {
+                    $post->media = new Media($post->media);
+                }
+                
+                $post->user = (!empty($post->author)) ? User::getMini($post->author) : User::getMini('booka');
 
-                $post->type = $post->home == 1 ? 'home' : 'footer';
+                if (!empty($post->booka)) {
+                    $post->bookaData = Booka::getMini($post->booka);
+                }
 
-                $list[$post->id] = $post;
+                $post->num_comments = Post\Comment::getCount($post->id);
+
+                //tags
+                $post->tags = Post\Tag::getAll($post->id);
+
+                $list[] = $post;
             }
 
             return $list;
         }
 
         /*
-         * Entradas en portada o pie
+         * Lista simple de entradas en posicion home/footer/top
          */
-        //@FIXME essse blog a pi�on!
-        public static function getList ($position = 'home', $blog = 1) {
-
-            if (!in_array($position, array('home', 'footer'))) {
-                $position = 'home';
-            }
-
+        public static function getList ($type, $published = true, $limit = null) {
             $list = array();
 
             $sql = "
                 SELECT
-                    post.id as id,
-                    IFNULL(post_lang.title, post.title) as title,
-                    post.order as `order`
+                    id,
+                    title_es
                 FROM    post
-                LEFT JOIN post_lang
-                    ON  post_lang.id = post.id
-                    AND post_lang.lang = :lang
-                WHERE   post.blog = $blog
-                AND     post.$position = 1
-                AND     post.publish = 1
-                ORDER BY `order` ASC, title ASC
+                WHERE id IS NOT NULL
                 ";
+            // solo las entradas publicadas
+            if ($published) {
+                $sql .= " AND post.publish = 1
+                ";
+            }
+            if (in_array($type, array('top', 'home', 'footer'))) {
+                $sql .= " AND post.{$type} = 1
+                    ";
+            }
+            $sql .= "ORDER BY post.date DESC, post.id DESC
+                ";
+            if (!empty($limit)) {
+                $sql .= "LIMIT $limit";
+            }
 
-            $query = static::query($sql, array(':lang'=>\LANG));
+            $query = static::query($sql);
 
             foreach ($query->fetchAll(\PDO::FETCH_CLASS, __CLASS__) as $post) {
-                $list[$post->id] = $post->title;
+                $list[$post->id] = $post->title_es;
             }
 
             return $list;
         }
 
         public function validate (&$errors = array()) { 
-            if (empty($this->title))
-                $errors[] = 'Falta t�tulo';
-                //Text::get('mandatory-post-title');
+            if (empty($this->title_es))
+                $errors['title_es'] = 'Falta título';
+
+            if (empty($this->text_es))
+                $errors['text_es'] = 'Falta texto';
+
+            if (empty($this->date))
+                $errors['date'] = 'Falta fecha';
 
             if (empty($errors))
                 return true;
@@ -172,15 +289,23 @@ namespace Goteo\Model {
 
             $fields = array(
                 'id',
-                'blog',
-                'title',
-                'text',
-                'media',
-                'legend',
-                'order',
+                'title_es',
+                'title_en',
+                'text_es',
+                'text_en',
+                'media_es',
+                'media_en',
+                'legend_es',
+                'legend_en',
+                'date',
+                'url',
+                'allow',
                 'publish',
                 'home',
-                'footer'
+                'footer',
+                'top',
+                'booka',
+                'author'
                 );
 
             $set = '';
@@ -197,20 +322,76 @@ namespace Goteo\Model {
                 self::query($sql, $values);
                 if (empty($this->id)) $this->id = self::insertId();
 
+                // Luego la imagen
+                if (!empty($this->id) && is_array($this->image) && !empty($this->image['name'])) {
+                    $image = new Image($this->image);
+                    if ($image->save($errors)) {
+                        $this->gallery[] = $image;
+
+                        /**
+                         * Guarda la relación NM en la tabla 'post_image'.
+                         */
+                        if(!empty($image->id)) {
+                            self::query("REPLACE post_image (post, image) VALUES (:post, :image)", array(':post' => $this->id, ':image' => $image->id));
+                        }
+                    }
+                    else {
+                        Advice::Error(Text::get('image-upload-fail') . implode(', ', $errors));
+                    }
+                }
+
+                // y los tags, si hay
+                if (!empty($this->id) && is_array($this->tags)) {
+                    static::query('DELETE FROM post_tag WHERE post= ?', $this->id);
+                    foreach ($this->tags as $tag) {
+                        $new = new Post\Tag(
+                                array(
+                                    'post' => $this->id,
+                                    'tag' => $tag
+                                )
+                            );
+                        $new->assign($errors);
+                        unset($new);
+                    }
+                }
+
                 return true;
             } catch(\PDOException $e) {
-                $errors[] = "No se ha guardado correctamente. " . $e->getMessage();
+                $errors[] = "HA FALLADO!!! " . $e->getMessage();
                 return false;
             }
         }
 
+        /*
+         * Para quitar una entrada de posicion
+         */
+        public static function remove ($id, $from = null) {
+            
+            if (!in_array($from, array('home', 'footer', 'top'))) {
+                return false;
+            }
+
+            $sql = "UPDATE post SET `$from`=0, `order`=NULL WHERE id = :id";
+            if (self::query($sql, array(':id'=>$id))) {
+                return true;
+            } else {
+                return false;
+            }
+
+        }
+
+        /*
+         *  Actualizar una entrada en portada
+         * si es de nodo se guarda en otra tabla con el metodo update_node
+         */
         public function update (&$errors = array()) {
             if (!$this->id) return false;
 
             $fields = array(
                 'order',
                 'home',
-                'footer'
+                'footer',
+                'top'
                 );
 
             $set = '';
@@ -225,7 +406,10 @@ namespace Goteo\Model {
                 $values[":$field"] = $this->$field;
             }
 
-            if ($set == '') return false;
+            if ($set == '') {
+                $errors[] = 'Sin datos';
+                return false;
+            }
 
             try {
                 $sql = "UPDATE post SET " . $set . " WHERE post.id = :id";
@@ -233,7 +417,7 @@ namespace Goteo\Model {
 
                 return true;
             } catch(\PDOException $e) {
-                $errors[] = "No se ha guardado correctamente. " . $e->getMessage();
+                $errors[] = "HA FALLADO!!! " . $e->getMessage();
                 return false;
             }
         }
@@ -241,14 +425,15 @@ namespace Goteo\Model {
         /*
          * Para quitar una entrada
          */
-        public static function remove ($id, $from = null) {
+        public static function delete ($id) {
             
-            if (!in_array($from, array('home', 'footer'))) {
-                return false;
-            }
-
-            $sql = "UPDATE post SET `$from`=0, `order`=NULL WHERE id = :id";
+            $sql = "DELETE FROM post WHERE id = :id";
             if (self::query($sql, array(':id'=>$id))) {
+
+                // que elimine tambien sus imágenes
+                $sql = "DELETE FROM post_image WHERE post = :id";
+                self::query($sql, array(':id'=>$id));
+
                 return true;
             } else {
                 return false;
@@ -256,14 +441,13 @@ namespace Goteo\Model {
 
         }
 
+        
         /*
          * Para que salga antes  (disminuir el order)
          */
-        //@FIXME essse blog a pi�on!
-        public static function up ($id, $type = 'home') {
+        public static function up ($id, $type) {
             $extra = array (
-                    $type => 1,
-                    'blog' => 1
+                    $type => 1
                 );
             return Check::reorder($id, 'up', 'post', 'id', 'order', $extra);
         }
@@ -271,23 +455,63 @@ namespace Goteo\Model {
         /*
          * Para que un proyecto salga despues  (aumentar el order)
          */
-        //@FIXME essse blog a pi�on!
-        public static function down ($id, $type = 'home') {
+        public static function down ($id, $type) {
             $extra = array (
-                    $type => 1,
-                    'blog' => 1
+                    $type => 1
                 );
             return Check::reorder($id, 'down', 'post', 'id', 'order', $extra);
         }
 
         /*
-         * Orden para a�adirlo al final
+         * Orden para añadirlo al final
          */
-        public static function next ($type = 'home') {
+        public static function next ($type) {
             $query = self::query('SELECT MAX(`order`) FROM post WHERE '.$type.'=1');
             $order = $query->fetchColumn(0);
             return ++$order;
 
+        }
+
+        /*
+         * Para sacar la entrada anterior y la siguiente
+         * $way puede ser 'prev' para anterior y 'next' para siguiente
+         */
+        public static function navi ($id) {
+            
+            $list = array();
+            $prev = null;
+            $next = null;
+            
+            $sql = "SELECT id FROM post WHERE publish = 1 ORDER BY post.date DESC, post.id DESC";
+            
+            $query = self::query($sql, array(':id' => $id));
+            foreach ($query->fetchAll(\PDO::FETCH_OBJ) as $post) {
+                $list[$prev]['next'] = $post->id;
+                $list[$post->id] = array('prev'=>$prev, 'next'=>$next);
+                $prev = $post->id;
+            }
+
+            return $list[$id];
+        }
+
+        /*
+         *  Para saber si una entrada permite comentarios
+         */
+        public static function allowed ($id) {
+                $query = static::query("
+                    SELECT
+                        allow
+                    FROM    post
+                    WHERE id = :id
+                    ", array(':id' => $id));
+
+                $post = $query->fetchObject(__CLASS__);
+
+                if ($post->allow > 0) {
+                    return true;
+                } else {
+                    return false;
+                }
         }
 
     }

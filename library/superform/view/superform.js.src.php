@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ if (!('Superform' in window)) {
                     var id = $(this).attr('id');
 
                     var frm = $(this).parents('form').eq(0);                                        
-                    
+
                     if (frm) {
                                         
                         if (frm.__sf_fb && frm.__sf_fb !== id) {
@@ -250,7 +250,6 @@ if (!('Superform' in window)) {
             },
 
             update: function (el, params, success) {
-            
                 if (typeof el === 'string') {
                     el = $('div.element#' + el);
                 } else {                                                    
@@ -294,7 +293,7 @@ if (!('Superform' in window)) {
                                             sf.find('li.element').removeClass('updating busy');
                                         },
                             error: function () {
-                                /*alert('Error -->' + frm.attr('action') + '<--');*/
+                                alert('Error: enviar pantallazo a Onliners -->' + frm.attr('action') + '<-- Explicar que se estaba haciendo (para que podamos reproducir la incidencia)');
                             }
                         }); // el.__updating = $.ajax();
                     }

@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundaci�n Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,18 +18,17 @@
  *
  */
 
-namespace Goteo\Model {
+namespace Base\Model {
 
-    use \Goteo\Library\Text,
-        \Goteo\Model\Project,
-        \Goteo\Library\Check;
+    use \Base\Library\Text,
+        \Base\Model\Booka,
+        \Base\Library\Check;
 
-    class Promote extends \Goteo\Core\Model {
+    class Promote extends \Base\Core\Model {
 
         public
             $id,
-            $node,
-            $project,
+            $booka,
             $name,
             $title,
             $description,
@@ -39,38 +38,26 @@ namespace Goteo\Model {
         /*
          *  Devuelve datos de un destacado
          */
-        public static function get ($project, $node = \GOTEO_NODE) {
+        public static function get ($booka) {
                 $query = static::query("
                     SELECT  
-                        promote.id as id,
-                        promote.node as node,
-                        promote.project as project,
-                        project.name as name,
-                        IFNULL(promote_lang.title, promote.title) as title,
-                        IFNULL(promote_lang.description, promote.description) as description,
-                        promote.order as `order`,
-                        promote.active as `active`
+                        *
                     FROM    promote
-                    LEFT JOIN promote_lang
-                        ON promote_lang.id = promote.id
-                        AND promote_lang.lang = :lang
-                    INNER JOIN project
-                        ON project.id = promote.project
-                    WHERE promote.project = :project
-                    AND promote.node = :node
-                    ", array(':project'=>$project, ':node'=>$node, ':lang'=>\LANG));
+                    WHERE promote.booka = :booka
+                    ", array(':booka'=>$booka));
                 $promote = $query->fetchObject(__CLASS__);
+                $promote->booka = Booka::getMedium($promote->booka);
 
                 return $promote;
         }
 
         /*
-         * Lista de proyectos destacados
+         * Lista de Bookas destacados
          */
-        public static function getAll ($activeonly = false, $node = \GOTEO_NODE) {
+        public static function getAll ($activeonly = false) {
 
             // estados
-            $status = Project::status();
+            $status =  Booka::status();
 
             $promos = array();
 
@@ -78,28 +65,16 @@ namespace Goteo\Model {
 
             $query = static::query("
                 SELECT
-                    promote.id as id,
-                    promote.project as project,
-                    project.name as name,
-                    project.status as status,
-                    IFNULL(promote_lang.title, promote.title) as title,
-                    IFNULL(promote_lang.description, promote.description) as description,
-                    promote.order as `order`,
-                    promote.active as `active`
+                    *
                 FROM    promote
-                LEFT JOIN promote_lang
-                    ON promote_lang.id = promote.id
-                    AND promote_lang.lang = :lang
-                INNER JOIN project
-                    ON project.id = promote.project
-                WHERE promote.node = :node
+                WHERE promote.booka IS NOT NULL
                 $sqlFilter
-                ORDER BY `order` ASC, title ASC
-                ", array(':node' => $node, ':lang'=>\LANG));
+                ORDER BY `order` ASC
+                ");
             
             foreach($query->fetchAll(\PDO::FETCH_CLASS, __CLASS__) as $promo) {
-                $promo->description =Text::recorta($promo->description, 100, false);
-                $promo->status = $status[$promo->status];
+                $promo->booka = Booka::getMedium($promo->booka);
+                $promo->status = $status[$booka->status];
                 $promos[] = $promo;
             }
 
@@ -107,43 +82,34 @@ namespace Goteo\Model {
         }
 
         /*
-         * Lista de proyectos disponibles para destacar
+         * Lista de Bookas disponibles para destacar
          */
-        public static function available ($current = null, $node = \GOTEO_NODE) {
+        public static function available ($current = null) {
 
             if (!empty($current)) {
-                $sqlCurr = " AND project != '$current'";
+                $sqlCurr = " WHERE booka != '$current'";
             } else {
                 $sqlCurr = "";
             }
 
             $query = static::query("
                 SELECT
-                    project.id as id,
-                    project.name as name,
-                    project.status as status
-                FROM    project
+                    booka.id as id,
+                    booka.name_es as name,
+                    booka.status as status
+                FROM    booka
                 WHERE status > 2
-                AND project.id NOT IN (SELECT project FROM promote WHERE promote.node = :node{$sqlCurr} )
+                AND booka.id NOT IN (SELECT booka FROM promote {$sqlCurr} )
                 ORDER BY name ASC
-                ", array(':node' => $node));
+                ");
 
             return $query->fetchAll(\PDO::FETCH_CLASS, __CLASS__);
         }
 
 
         public function validate (&$errors = array()) { 
-            if (empty($this->node))
-                $errors[] = 'Falta nodo';
-                //Text::get('mandatory-promote-node');
-
-            if ($this->active && empty($this->project))
-                $errors[] = 'Se muestra y no tiene proyecto';
-                //Text::get('validate-promote-noproject');
-
-            if (empty($this->title))
-                $errors[] = 'Falta título';
-                //Text::get('mandatory-promote-title');
+            if (empty($this->booka))
+                $errors[] = 'No se ha indicado booka para destacar';
 
             if (empty($errors))
                 return true;
@@ -156,10 +122,7 @@ namespace Goteo\Model {
 
             $fields = array(
                 'id',
-                'node',
-                'project',
-                'title',
-                'description',
+                'booka',
                 'order',
                 'active'
                 );
@@ -188,10 +151,10 @@ namespace Goteo\Model {
         /*
          * Para quitar un proyecto destacado
          */
-        public static function delete ($project, $node = \GOTEO_NODE) {
+        public static function delete ($booka) {
             
-            $sql = "DELETE FROM promote WHERE project = :project AND node = :node";
-            if (self::query($sql, array(':project'=>$project, ':node'=>$node))) {
+            $sql = "DELETE FROM promote WHERE booka = :booka";
+            if (self::query($sql, array(':booka'=>$booka))) {
                 return true;
             } else {
                 return false;
@@ -215,29 +178,22 @@ namespace Goteo\Model {
         /*
          * Para que un proyecto salga antes  (disminuir el order)
          */
-        public static function up ($project, $node = \GOTEO_NODE) {
-            $extra = array (
-                    'node' => $node
-                );
-            return Check::reorder($project, 'up', 'promote', 'project', 'order', $extra);
+        public static function up ($booka) {
+            return Check::reorder($booka, 'up', 'promote', 'id', 'order');
         }
 
         /*
          * Para que un proyecto salga despues  (aumentar el order)
          */
-        public static function down ($project, $node = \GOTEO_NODE) {
-            $extra = array (
-                    'node' => $node
-                );
-            return Check::reorder($project, 'down', 'promote', 'project', 'order', $extra);
+        public static function down ($booka) {
+            return Check::reorder($booka, 'down', 'promote', 'id', 'order');
         }
 
         /*
          *
          */
-        public static function next ($node = \GOTEO_NODE) {
-            $query = self::query('SELECT MAX(`order`) FROM promote WHERE node = :node'
-                , array(':node'=>$node));
+        public static function next () {
+            $query = self::query('SELECT MAX(`order`) FROM promote');
             $order = $query->fetchColumn(0);
             return ++$order;
 

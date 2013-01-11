@@ -1,0 +1,90 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* La página de comunidad */
+
+body.community div.results-bar {
+    margin-top: 30px;
+    width: auto !important;
+}
+
+body.community div.results-bar.footer {
+    margin-top: 6px !important;
+}
+
+div#community-columns {
+}
+
+div#community-columns > div.column {
+    float: left;
+    width: 419px;
+}
+
+div.column + div.column {
+    margin-left: 30px;
+}
+
+div#community-columns div.subitem {
+    border-top: 1px dashed #C9C6A3;
+    padding: 10px 0;
+}
+
+div#community-columns div.subitem div.image,
+div#community-columns div.subitem div.content {
+    display: inline-block;
+    float: left;
+}
+
+div#community-columns div.subitem div.image {
+    width: 75px;
+    margin-right: 10px;
+}
+
+div#community-columns div.subitem.user div.image {
+    width: 102px !important;
+}
+
+div#community-columns div.subitem div.image a.avatar,
+div#community-columns div.subitem div.image a.booka {
+}
+
+div#community-columns div.subitem div.image a.booka {
+    margin-left: 3px;
+}
+
+div#community-columns div.subitem div.content {
+    height: 60px;
+    width: 330px;
+}
+
+div#community-columns div.subitem.user div.content {
+    width: 305px !important;
+}
+
+div#community-columns div.subitem div.content a.title {
+    margin-bottom: 3px;
+}
+
+div#community-columns div.subitem div.content div.content-pub {
+    margin-top: 10px;
+}
+
+div#community-columns div.subitem div.content div.content-pub > * {
+    font-size: 11px;
+}
+

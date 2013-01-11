@@ -18,19 +18,20 @@
  *
  */
 
+namespace Base\Model {
 
-namespace Goteo\Model {
+    use Base\Library\Text,
+        Base\Model\Image,
+        Base\Model\User,
+        Base\Model\Booka;
 
-    use Goteo\Library\Text,
-        Goteo\Model\Image;
-
-    class Invest extends \Goteo\Core\Model {
+    class Invest extends \Base\Core\Model {
 
         public
             $id,
             $user,
-            $project,
-            $account, // cuenta paypal o email del usuario
+            $booka,
+            $account, // PayerID de expresscheckout o email si aporte manual
             $amount, //cantidad monetaria del aporte
             $preapproval, //clave del preapproval
             $payment, //clave del cargo
@@ -38,6 +39,7 @@ namespace Goteo\Model {
             $method, // metodo de pago paypal/tpv
             $status, //estado en el que se encuentra esta aportación:
                     // -1 en proceso, 0 pendiente, 1 cobrado (charged), 2 devuelto (returned)
+            $issue, // aporte con incidencia
             $anonymous, //no debe aparecer su careto ni su nombre, nivel, etc... pero si aparece en la cuenta de cofinanciadores y de aportes
             $resign, //renuncia a cualquier recompensa
             $invested, //fecha en la que se ha iniciado el aporte
@@ -71,12 +73,14 @@ namespace Goteo\Model {
                     FROM  invest_reward
                     INNER JOIN reward
                         ON invest_reward.reward = reward.id
+                    INNER JOIN reward_type
+                        ON reward_type.id = reward.type
                     WHERE   invest_reward.invest = ?
                     ", array($id));
-				$invest->rewards = $query->fetchAll(\PDO::FETCH_CLASS);
+				$invest->rewards = $query->fetchAll(\PDO::FETCH_OBJ);
 
 				$query = static::query("
-                    SELECT  address, zipcode, location, country, name, nif
+                    SELECT  address, city, location, zipcode, country, name, nif
                     FROM  invest_address
                     WHERE   invest_address.invest = ?
                     ", array($id));
@@ -84,11 +88,7 @@ namespace Goteo\Model {
 
                 // si no tiene dirección, sacamos la dirección del usuario
                 if (empty($invest->address)) {
-                    $usr_address = User::getPersonal($invest->user);
-                    $usr_address->name = $usr_address->contract_name;
-                    $usr_address->nif = $usr_address->contract_nif;
-
-                    $invest->address = $usr_address;
+                    $invest->address = User::getPersonal($invest->user);
                 }
                 
                 return $invest;
@@ -99,7 +99,7 @@ namespace Goteo\Model {
          *
          * el parametro filter es para la gestion de recompensas (no es un autentico filtro, hay ordenaciones y hay filtros)
          */
-        public static function getAll ($project, $filter = null) {
+        public static function getAll ($booka, $filter = null) {
 
             /*
              * Estos son los filtros
@@ -118,9 +118,9 @@ namespace Goteo\Model {
             $query = static::query("
                 SELECT  *
                 FROM  invest
-                WHERE   invest.project = ?
+                WHERE   invest.booka = ?
                 AND invest.status IN ('0', '1', '3', '4')
-                ", array($project));
+                ", array($booka));
             foreach ($query->fetchAll(\PDO::FETCH_CLASS, __CLASS__) as $invest) {
                 // datos del usuario
                 $invest->user = User::get($invest->user);
@@ -164,9 +164,10 @@ namespace Goteo\Model {
          */
         public static function getList ($filters = array()) {
 
+            $values = array();
             /*
              * Estos son los filtros
-            $fields = array('method', 'status', 'investStatus', 'project', 'user', 'campaign', 'types');
+            $fields = array('method', 'status', 'investStatus', 'booka', 'user', 'campaign', 'types');
              */
 
             $list = array();
@@ -176,19 +177,24 @@ namespace Goteo\Model {
                 $sqlFilter .= " AND invest.method = '{$filters['methods']}'";
             }
             if (is_numeric($filters['status'])) {
-                $sqlFilter .= " AND project.status = '{$filters['status']}'";
+                $sqlFilter .= " AND booka.status = '{$filters['status']}'";
             }
             if (is_numeric($filters['investStatus'])) {
                 $sqlFilter .= " AND invest.status = '{$filters['investStatus']}'";
             }
-            if (!empty($filters['projects'])) {
-                $sqlFilter .= " AND invest.project = '{$filters['projects']}'";
+            if (!empty($filters['bookas'])) {
+                $sqlFilter .= " AND invest.booka = '{$filters['bookas']}'";
             }
             if (!empty($filters['users'])) {
                 $sqlFilter .= " AND invest.user = '{$filters['users']}'";
             }
-            if (!empty($filters['campaigns'])) {
-                $sqlFilter .= " AND invest.campaign = '{$filters['campaigns']}'";
+            if (!empty($filters['name'])) {
+                $sqlFilter .= " AND invest.user IN (SELECT id FROM user WHERE (name LIKE :name OR email LIKE :name))";
+                $values[':name'] = "%{$filters['name']}%";
+            }
+            if (!empty($filters['collections'])) {
+                $sqlFilter .= " AND booka.collection = :collection";
+                $values[':collection'] = $filters['collections'];
             }
             if (!empty($filters['types'])) {
                 switch ($filters['types']) {
@@ -200,9 +206,6 @@ namespace Goteo\Model {
                         break;
                     case 'manual':
                         $sqlFilter .= " AND invest.admin IS NOT NULL";
-                        break;
-                    case 'campaign':
-                        $sqlFilter .= " AND invest.campaign IS NOT NULL";
                         break;
                 }
             }
@@ -235,30 +238,28 @@ namespace Goteo\Model {
             $sql = "SELECT
                         invest.id as id,
                         invest.user as user,
-                        invest.project as project,
+                        invest.booka as booka,
                         invest.method as method,
                         invest.status as investStatus,
-                        project.status as status,
-                        invest.campaign as campaign,
                         invest.amount as amount,
                         invest.anonymous as anonymous,
                         invest.resign as resign,
-                        DATE_FORMAT(invest.invested, '%d/%m/%Y') as invested,
-                        DATE_FORMAT(invest.charged , '%d/%m/%Y') as charged,
-                        DATE_FORMAT(invest.returned, '%d/%m/%Y') as returned,
-                        user.name as admin
+                        DATE_FORMAT(invest.invested, '%d | %m | %Y') as invested,
+                        DATE_FORMAT(invest.charged , '%d | %m | %Y') as charged,
+                        DATE_FORMAT(invest.returned, '%d | %m | %Y') as returned,
+                        invest.admin as admin
                     FROM invest
-                    INNER JOIN project
-                        ON invest.project = project.id
-                    LEFT JOIN user
-                        ON invest.admin = user.id
-                    WHERE invest.project IS NOT NULL
+                    INNER JOIN booka
+                        ON invest.booka = booka.id
+                    WHERE invest.booka IS NOT NULL
                         $sqlFilter
                     ORDER BY invest.id DESC
                     ";
 
-            $query = self::query($sql);
+            $query = self::query($sql, $values  );
             foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $item) {
+                $item->booka = Booka::getMini($item->booka);
+                $item->user = User::getMini($item->user);
                 $list[$item->id] = $item;
             }
             return $list;
@@ -270,19 +271,15 @@ namespace Goteo\Model {
         public function validate (&$errors = array()) { 
             if (!is_numeric($this->amount))
                 $errors[] = 'La cantidad no es correcta';
-                //Text::get('validate-invest-amount');
 
             if (empty($this->method))
                 $errors[] = 'Falta metodo de pago';
-                //Text::get('mandatory-invest-method');
 
             if (empty($this->user))
                 $errors[] = 'Falta usuario';
-                //Text::get('mandatory-invest-user');
 
-            if (empty($this->project))
+            if (empty($this->booka))
                 $errors[] = 'Falta proyecto';
-                //Text::get('mandatory-invest-project');
 
             if (empty($errors))
                 return true;
@@ -296,7 +293,7 @@ namespace Goteo\Model {
             $fields = array(
                 'id',
                 'user',
-                'project',
+                'booka',
                 'amount',
                 'preapproval',
                 'payment',
@@ -308,8 +305,7 @@ namespace Goteo\Model {
                 'invested',
                 'charged',
                 'returned',
-                'admin',
-                'campaign'
+                'admin'
                 );
 
             $set = '';
@@ -336,14 +332,15 @@ namespace Goteo\Model {
 
                 // dirección
                 if (!empty($this->address)) {
-                    $sql = "REPLACE INTO invest_address (invest, user, address, zipcode, location, country, name, nif)
-                        VALUES (:invest, :user, :address, :zipcode, :location, :country, :name, :nif)";
+                    $sql = "REPLACE INTO invest_address (invest, user, address, zipcode, location, city, country, name, nif)
+                        VALUES (:invest, :user, :address, :zipcode, :location, :city, :country, :name, :nif)";
                     self::query($sql, array(
                         ':invest'=>$this->id,
                         ':user'=>$this->user,
                         ':address'=>$this->address->address,
                         ':zipcode'=>$this->address->zipcode, 
                         ':location'=>$this->address->location, 
+                        ':city'=>$this->address->city, 
                         ':country'=>$this->address->country,
                         ':name'=>$this->address->name,
                         ':nif'=>$this->address->nif
@@ -359,29 +356,109 @@ namespace Goteo\Model {
         }
 
         /*
-         * Lista de proyectos con aportes
+         * Para actualizar recompensa (o renuncia) y dirección
+         */
+        public function update (&$errors = array()) {
+
+            self::query("START TRANSACTION");
+
+            try {
+                // si renuncia
+                $sql = "UPDATE invest SET resign = :resign, amount = :amount, anonymous = :anonymous WHERE id = :id";
+                self::query($sql, array(':id'=>$this->id, ':resign'=>$this->resign, ':amount'=>$this->amount, ':anonymous'=>$this->anonymous));
+
+                // borramos als recompensas
+                $sql = "DELETE FROM invest_reward WHERE invest = :invest";
+                self::query($sql, array(':invest'=>$this->id));
+
+                // y grabamos las nuevas
+                foreach ($this->rewards as $reward) {
+                    $sql = "REPLACE INTO invest_reward (invest, reward) VALUES (:invest, :reward)";
+                    self::query($sql, array(':invest'=>$this->id, ':reward'=>$reward));
+                }
+
+                // dirección
+                if (!empty($this->address)) {
+                    $sql = "REPLACE INTO invest_address (invest, user, address, zipcode, location, city, country, name, nif)
+                        VALUES (:invest, :user, :address, :zipcode, :location, :city, :country, :name, :nif)";
+                    self::query($sql, array(
+                        ':invest'=>$this->id,
+                        ':user'=>$this->user,
+                        ':address'=>$this->address->address,
+                        ':zipcode'=>$this->address->zipcode,
+                        ':location'=>$this->address->location,
+                        ':city'=>$this->address->city,
+                        ':country'=>$this->address->country,
+                        ':name'=>$this->address->name,
+                        ':nif'=>$this->address->nif
+                        )
+                    );
+                }
+
+                self::query("COMMIT");
+
+                return true;
+
+            } catch (\PDOException $e) {
+                self::query("ROLLBACK");
+                $errors[] = "Envíanos esto: <br />" . $e->getMessage();
+                return false;
+            }
+        }
+
+        /*
+         * Para pasar un aporte con incidencia a resuelta, cash y cobrado
+         */
+        public function solve (&$errors = array()) {
+
+            self::query("START TRANSACTION");
+
+            try {
+                // si renuncia
+                $sql = "UPDATE invest SET  method = 'cash', status = 1, issue = 0 WHERE id = :id";
+                self::query($sql, array(':id'=>$this->id));
+
+                // añadir detalle
+                $sql = "INSERT INTO invest_detail (invest, type, log, date)
+                    VALUES (:id, 'solved', :log, NOW())";
+
+                self::query($sql, array(':id'=>$this->id, ':log'=>'Incidencia resuelta por el admin '.$_SESSION['user']->name.', aporte pasado a cash y cobrado'));
+
+
+                self::query("COMMIT");
+
+                return true;
+
+            } catch (\PDOException $e) {
+                self::query("ROLLBACK");
+                $errors[] = $e->getMessage();
+                return false;
+            }
+        }
+
+
+        /* Lista de Bookas con aportes
          *
          * @param bool success solo los prroyectos en campaña, financiados o exitosos
          */
-        public static function projects ($success = false, $node = \GOTEO_NODE) {
+        public static function bookas ($success = false) {
 
             $list = array();
 
             $sql = "
                 SELECT
-                    project.id as id,
-                    project.name as name
-                FROM    project
+                    booka.id as id,
+                    booka.name_es as name
+                FROM    booka
                 INNER JOIN invest
-                    ON project.id = invest.project
+                    ON booka.id = invest.booka
                     ";
 
             if ($success) {
-                $sql .= " WHERE project.status >= 3 AND project.status <= 5 ";
+                $sql .= " WHERE booka.status >= 3 AND booka.status <= 5 ";
             }
-            $sql .= " ORDER BY project.name ASC";
+            $sql .= " ORDER BY name ASC";
 
-            //, array(':node' => $node)
             $query = static::query($sql);
 
             foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $item) {
@@ -424,39 +501,106 @@ namespace Goteo\Model {
         }
 
         /*
-         * Lista de campañas con aportes asociados
+         * Lista de emails de usuarios que han aportado a algo
          */
-        public static function campaigns () {
+        public static function emails ($all = false) {
 
             $list = array();
 
-            $query = static::query("
+            $sql = "
                 SELECT
-                    campaign.id as id,
-                    campaign.name as name
-                FROM    campaign
+                    user.id as id,
+                    user.email as email
+                FROM    user
                 INNER JOIN invest
-                    ON campaign.id = invest.campaign
-                ORDER BY campaign.name ASC
-                ");
+                    ON user.id = invest.user
+                ";
+
+            if (!$all) {
+                $sql .= "WHERE (user.hide = 0 OR user.hide IS NULL)
+                    ";
+            }
+                $sql .= "ORDER BY user.id ASC
+                ";
+
+            $query = static::query($sql);
 
             foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $item) {
-                $list[$item->id] = $item->name;
+                $list[$item->id] = $item->email;
             }
 
             return $list;
         }
 
+
+        /*
+         * Lista de usuarios que aportan en el mismo proyecto que cierto usuario
+         */
+        public static function getCoinvestors ($user, $limit = null) {
+
+             $array = array ();
+            try {
+
+                $values = array(':me'=>$user);
+
+               $sql = "SELECT 
+                            invest.user as id, 
+                            user.name as name,
+                            user.avatar as avatar,
+                            DATE_FORMAT(invest.invested, '%d | %m | %Y') as date
+                        FROM invest
+                        INNER JOIN invest as mine
+                            ON invest.booka = mine.booka
+                            AND mine.user = :me
+                            AND mine.status IN ('0', '1', '3')
+                        INNER JOIN user
+                            ON  user.id = invest.user
+                            AND (user.hide = 0 OR user.hide IS NULL)
+                        WHERE invest.user != :me
+                        AND invest.status IN ('0', '1', '3')
+                        AND (invest.anonymous = 0 OR invest.anonymous IS NULL)
+                        GROUP BY invest.user
+                        ORDER BY RAND()
+                    ";
+               if (!empty($limit)) {
+                   $sql .= " LIMIT $limit";
+               }
+               
+                $query = static::query($sql, $values);
+                $shares = $query->fetchAll(\PDO::FETCH_ASSOC);
+                foreach ($shares as $share) {
+
+                    // nombre i avatar vienen en la sentencia, hay que sacar la imagen
+                    $share['user'] = $share['id'];
+                    $queryI = static::query("SELECT COUNT(DISTINCT(booka)) FROM invest WHERE user = ? AND status IN ('0', '1', '3')", array($share['id']));
+                    $share['bookas'] = $queryI->fetchColumn(0);
+                    $queryP = static::query("SELECT SUM(amount) FROM invest WHERE user = ? AND status IN ('0', '1', '3')", array($share['id']));
+                    $share['amount'] = $queryP->fetchColumn(0);
+                    $share['avatar'] = (empty($share['avatar'])) ? Image::get(1) : Image::get($share['avatar']);
+                    if (!$share['avatar'] instanceof Image) {
+                        $share['avatar'] = Image::get(1);
+                    }
+                    
+                    $array[] = (object) $share;
+                }
+
+                return $array;
+            } catch(\PDOException $e) {
+				throw new \Base\Core\Exception($e->getMessage());
+            }
+            
+        }
+
         /*
          * Obtenido por un proyecto
          */
-        public static function invested ($project) {
+        public static function invested ($booka) {
             $query = static::query("
                 SELECT  SUM(amount) as much
                 FROM    invest
-                WHERE   project = :project
-                AND     (invest.status = 0 OR invest.status = 1 OR invest.status = 3 OR invest.status = 4)
-                ", array(':project' => $project));
+                WHERE   booka = :booka
+                AND     status IN ('0', '1', '3', '4')
+                ", array(':booka' => $booka));
             $got = $query->fetchObject();
             return (int) $got->much;
         }
@@ -464,7 +608,7 @@ namespace Goteo\Model {
         /*
          * Usuarios que han aportado aun proyecto
          */
-        public static function investors ($project, $projNum = true, $showall = false) {
+        public static function investors ($booka) {
             $investors = array();
 
             $sql = "
@@ -473,60 +617,50 @@ namespace Goteo\Model {
                     user.name as name,
                     user.avatar as avatar,
                     invest.amount as amount,
-                    DATE_FORMAT(invest.invested, '%d/%m/%Y') as date,
-                    ";
-            if ($projNum) {
-                $sql .= "(SELECT
-                        COUNT(DISTINCT(project))
-                     FROM invest as invb
-                     WHERE invb.user = invest.user
-                     AND  invb.status IN ('0', '1', '3', '4')
-                     ) as projects,";
-            }
-
-            $sql .= "user.hide as hide,
-                     invest.anonymous as anonymous
+                    DATE_FORMAT(invest.invested, '%d | %m | %Y') as date,
+                    user.hide as hide,
+                    invest.anonymous as anonymous,
+                    (
+                        SELECT  COUNT(DISTINCT(ivb.booka)) 
+                        FROM invest as ivb 
+                        WHERE ivb.user = user.id        
+                        AND ivb.status IN ('0', '1', '3', '4')
+                    ) as bookas
                 FROM    invest
                 INNER JOIN user
                     ON  user.id = invest.user
-                WHERE   project = ?
+                WHERE   booka = ?
                 AND     invest.status IN ('0', '1', '3', '4')
                 ORDER BY invest.invested DESC
                 ";
 
-            $query = self::query($sql, array($project));
+            $query = self::query($sql, array($booka));
             foreach ($query->fetchAll(\PDO::FETCH_OBJ) as $investor) {
 
                 $investor->avatar = Image::get($investor->avatar);
                 if (empty($investor->avatar->id) || !$investor->avatar instanceof Image) {
                     $investor->avatar = Image::get(1);
                 }
-
-
+                
                 // si el usuario es hide o el aporte es anonymo, lo ponemos como el usuario anonymous (avatar 1)
-                if (!$showall && ($investor->hide == 1 || $investor->anonymous == 1)) {
-
-                    // mantenemos la fecha del anonimo mas reciente
-                    $anonymous_date = empty($investors['anonymous']->date) ? $investor->date : $investors['anonymous']->date;
+                if ($investor->hide == 1 || $investor->anonymous == 1) {
 
                     $investors[] = (object) array(
                         'user' => 'anonymous',
                         'name' => Text::get('regular-anonymous'),
-                        'projects' => null,
+                        'bookas' => null,
                         'avatar' => Image::get(1),
-                        'worth' => null,
                         'amount' => $investor->amount,
                         'date' => $investor->date
                     );
 
                 } else {
-
-                    $investors[$investor->user] = (object) array(
+//$investor->user
+                    $investors[] = (object) array(
                         'user' => $investor->user,
                         'name' => $investor->name,
-                        'projects' => $investor->projects,
+                        'bookas' => $investor->bookas,
                         'avatar' => $investor->avatar,
-                        'worth' => \Goteo\Model\User::calcWorth($investor->user),
                         'amount' => ($investors[$investor->user]->amount + $investor->amount),
                         'date' => $investor->date
                     );
@@ -538,22 +672,50 @@ namespace Goteo\Model {
             return $investors;
         }
 
+        /* nuemro de cofinanciadores individuales, simpemente */
+        public static function numInvestors ($booka) {
+            $values = array(':booka' => $booka);
+
+            $sql = "SELECT  COUNT(DISTINCT(user)) as investors
+                FROM    invest
+                WHERE   booka = :booka
+                AND     invest.status IN ('0', '1', '3', '4')
+                ";
+
+            $query = static::query($sql, $values);
+            $got = $query->fetchObject();
+            return (int) $got->investors;
+        }
+
+        public static function my_numInvestors ($owner) {
+            $values = array(':owner' => $owner);
+
+            $sql = "SELECT  COUNT(DISTINCT(user)) as investors
+                FROM    invest
+                WHERE   project IN (SELECT id FROM project WHERE owner = :owner)
+                AND     invest.status IN ('0', '1', '3', '4')
+                ";
+
+            $query = static::query($sql, $values);
+            $got = $query->fetchObject();
+            return (int) $got->investors;
+        }
         /*
          *  Aportaciones realizadas por un usaurio
          *  devuelve total y fecha de la última
          */
-        public static function supported ($user, $project) {
+        public static function supported ($user, $booka) {
 
             $sql = "
-                SELECT  SUM(amount) as total, DATE_FORMAT(invested, '%d/%m/%Y') as date
+                SELECT  SUM(amount) as total, DATE_FORMAT(invested, '%d | %m | %Y') as date
                 FROM    invest
                 WHERE   user = :user
-                AND     project = :project
+                AND     booka = :booka
                 AND     invest.status IN ('0', '1', '3', '4')
                 AND     (anonymous = 0 OR anonymous IS NULL)
-                ORDER BY invested DESC";
+                ";
 
-            $query = self::query($sql, array(':user' => $user, ':project' => $project));
+            $query = self::query($sql, array(':user' => $user, ':booka' => $booka));
             return $query->fetchObject();
         }
 
@@ -639,25 +801,6 @@ namespace Goteo\Model {
             } else {
                 return false;
             }
-        }
-
-        /*
-         *  Pone el preapproval key al registro del aporte
-         */
-        public function setPreapproval ($key) {
-
-            $values = array(
-                ':id' => $this->id,
-                ':preapproval' => $key
-            );
-
-            $sql = "UPDATE invest SET preapproval = :preapproval WHERE id = :id";
-            if (self::query($sql, $values)) {
-                return true;
-            } else {
-                return false;
-            }
-            
         }
 
         /*
@@ -773,17 +916,27 @@ namespace Goteo\Model {
 
         }
 
+        /* Para marcar que es una incidencia */
+        public static function setIssue($id) {
+           self::query("UPDATE invest SET issue = 1 WHERE id = :id", array(':id' => $id));
+        }
+
+        /* Para desmarcar incidencia */
+        public static function unsetIssue($id) {
+           self::query("UPDATE invest SET issue = 0 WHERE id = :id", array(':id' => $id));
+        }
+
         /*
          * Estados del aporte
          */
         public static function status ($id = null) {
             $array = array (
                 -1 => 'En proceso',
-                0  => 'Pendiente de cargo',
-                1  => 'Cargo ejecutado',
+                0  => 'Posible incidencia',
+                1  => 'Cobrado',
                 2  => 'Cancelado',
-                3  => 'Pagado al proyecto',
-                4  => 'Caducado',
+                3  => 'Pagado al publisher',
+                4  => 'Irrecuperable',
                 5  => 'Reubicado'
             );
 
@@ -810,302 +963,83 @@ namespace Goteo\Model {
         /*
          * Metodo para obtener datos para el informe completo (con incidencias y netos)
          */
-         public static function getReportData($project, $status, $round, $passed) {
-             $Data = array();
-
-            // segun estado, ronda y fecha de pase a segunda
-            // el cash(1) es igual para todos
-            switch ($status) {
-                case 0: // descartado
-                case 1: // edicion
-                case 2: // revision
-                case 6: // caducado
-                    // Para estos cuatro estados es lo mismo:
-                    // - Solo finaciacion actual
-                    //      (aunque hiciera una ronda, aunque se descartara en segunda ronda)
-                    // - Puede tener aportes en cash
-                    // - Puede tener aportes caducados (pero no los mostramos)
-                    // - Si tiene aportes de paypal(0,1) o tpv(1) es un problema
-
-                    // A ver si tiene cash
-                    // si hay aportes de cash activos no es incidencia porque puede venir de taller
-                    // a menos que sea de convocatoria (que deberian estar cancelados)
-                    $inv_cash = self::getList(array(
-                        'methods' => 'cash',
-                        'projects' => $project,
-                        'investStatus' => '1'
-                    ));
-                    if (!empty($inv_cash)) {
-                        $Data['note'][] = "Los aportes cash pueden venir de un taller y no son incidencias, solamente estan pendientes de reubicar";
-                        $Data['cash']['total']['fail'] = 0;
-                        foreach ($inv_cash as $invId => $invest) {
-                            $Data['cash']['total']['users'][$invest->user] = $invest->user;
-                            $Data['cash']['total']['invests']++;
-                            $Data['cash']['total']['amount'] += $invest->amount;
-                            if ($invest->campaign == 1) {
-                                $Data['cash']['total']['fail'] += $invest->amount;
-                                $Data['note'][] = "Aporte de capital riego {$invId} debería estar cancelado";
-                            }
-                        }
-                    }
-
-                    // A ver si tiene paypal
-                    // si estan pendientes, ejecutados o pagados al proyecto es una incidencia
-                    $inv_paypal = self::getList(array(
-                        'methods' => 'paypal',
-                        'projects' => $project
-                    ));
-                    if (!empty($inv_paypal)) {
-//                        $Data['note'][] = "Los aportes de paypal son incidencias si están activos";
-                        foreach ($inv_paypal as $invId => $invest) {
-                            if (in_array($invest->investStatus, array(0, 1, 3))) {
-                                $Data['paypal']['total']['fail'] += $invest->amount;
-                                $Data['note'][] = "El aporte PayPal {$invId} no debería estar en estado '" . self::status($invest->investStatus) . "'";
-                            }
-                        }
-                    }
-
-                    // A ver si tiene tpv
-                    // si estan pendientes, ejecutados o pagados al proyecto es una incidencia
-                    $inv_tpv = self::getList(array(
-                        'methods' => 'tpv',
-                        'projects' => $project
-                    ));
-                    if (!empty($inv_tpv)) {
-//                        $Data['note'][] = "Los aportes de tpv son incidencias si están activos";
-                        foreach ($inv_tpv as $invId => $invest) {
-                            if ($invest->investStatus == 1) {
-                                $Data['tpv']['total']['fail'] += $invest->amount;
-                                $Data['note'][] = "El aporte TPV {$invId} no debería estar en estado '" . self::status($invest->investStatus) . "'";
-                            }
-                        }
-                    }
-
-
-                    break;
-                case 4: // financiado
-                case 5: // exitoso
-                    // en etos dos estados paypal(0) es incidencia en cualquier ronda
-                    $p0 = (string) 'all';
-                case 3: // en marcha
-                    // si tiene fecha $project->passed de pase a segunda ronda: paypal(0) no es incidencia para los aportes de segunda ronda
-                    if (!empty($passed)) {
-                        if ($round == 1) {
-                            // esto es mal
-                            $Data['note'][] = "ATENCION! Está marcada la fecha de pase a segunda ronda (el {$passed}) pero sique en primera ronda!!! Informe solamente actual=primera";
-                            $act_eq = (string) 'first';
-                        } else {
-                            // en segunda ronda
-                            $p0 = (string) 'first'; // paypal(0) es incidencia paralos de primera ronda solamente
-                            // si está en segunda ronda; la financiacion actual es un merge de usuarios y suma de aportes correctos, incidencias, correctos y cantidad total
-                            $act_eq = (string) 'sum';
-                        }
-                    } else {
-                        // si no tiene fecha de pase y esta en ronda 2: es un problema se trata como solo financiacion actual y paypal(0) no son incidencias
-                        if ($round == 2) {
-                            $Data['note'][] = "ATENCION! En segunda ronda pero NO está marcada la fecha de pase a segunda ronda!!! Informe solamente actual=primera";
-                            $act_eq = (string) 'first';
-                        } else {
-                            // ok, en primera ronda sin  fecha marcada, informe solo actual = primera
-                            $act_eq = (string) 'first';
-                        }
-                    }
-
-                    // si solamente financiacion actual=primera
-                    //   simple: no filtramos fecha
-                    if ($act_eq === 'first') {
-                        // CASH
-                        $inv_cash = self::getList(array(
-                            'methods' => 'cash',
-                            'projects' => $project,
-                            'investStatus' => '1'
-                        ));
-                        if (!empty($inv_cash)) {
-                            $Data['cash']['first']['fail'] = 0;
-                            foreach ($inv_cash as $invId => $invest) {
-                                $Data['cash']['first']['users'][$invest->user] = $invest->user;
-                                $Data['cash']['first']['invests']++;
-                                $Data['cash']['first']['amount'] += $invest->amount;
-                            }
-                            $Data['cash']['total'] = $Data['cash']['first'];
-                        }
-
-                        // TPV
-                        $inv_tpv = self::getList(array(
-                            'methods' => 'tpv',
-                            'projects' => $project,
-                            'investStatus' => '1'
-                        ));
-                        if (!empty($inv_tpv)) {
-                            $Data['tpv']['first']['fail'] = 0;
-                            foreach ($inv_tpv as $invId => $invest) {
-                                $Data['tpv']['first']['users'][$invest->user] = $invest->user;
-                                $Data['tpv']['first']['invests']++;
-                                $Data['tpv']['first']['amount'] += $invest->amount;
-                            }
-                            $Data['tpv']['total'] = $Data['tpv']['first'];
-                        }
-
-
-                        // PAYPAL
-                        if (!empty($inv_paypal)) {
-                            $Data['paypal']['first']['fail'] = 0;
-                            foreach ($inv_paypal as $invId => $invest) {
-                                if (in_array($invest->investStatus, array('0', '1', '3'))) {
-                                    $Data['paypal']['first']['users'][$invest->user] = $invest->user;
-                                    $Data['paypal']['first']['invests']++;
-                                    $Data['paypal']['first']['amount'] += $invest->amount;
-                                }
-                            }
-                            $Data['paypal']['total'] = $Data['paypal']['first'];
-                        }
-
-                    } elseif ($act_eq === 'sum') {
-                        // complicado: primero los de primera ronda, luego los de segunda ronda sumando al total
-                        // calcular ultimo dia de primera ronda segun la fecha de pase
-                        $passtime = strtotime($passed);
-                        $last_day = date('Y-m-d', \mktime(0, 0, 0, date('m', $passtime), date('d', $passtime)-1, date('Y', $passtime)));
-                        
-                        // CASH first
-                        $inv_cash = self::getList(array(
-                            'methods' => 'cash',
-                            'projects' => $project,
-                            'investStatus' => '1',
-                            'date_until' => $last_day
-                        ));
-                        if (!empty($inv_cash)) {
-                            $Data['cash']['first']['fail'] = 0;
-                            foreach ($inv_cash as $invId => $invest) {
-                                $Data['cash']['first']['users'][$invest->user] = $invest->user;
-                                $Data['cash']['first']['invests']++;
-                                $Data['cash']['first']['amount'] += $invest->amount;
-                            }
-                            $Data['cash']['total'] = $Data['cash']['first'];
-                        }
-
-                        // TPV first
-                        $inv_tpv = self::getList(array(
-                            'methods' => 'tpv',
-                            'projects' => $project,
-                            'investStatus' => '1',
-                            'date_until' => $last_day
-                        ));
-                        if (!empty($inv_tpv)) {
-                            $Data['tpv']['first']['fail'] = 0;
-                            foreach ($inv_tpv as $invId => $invest) {
-                                $Data['tpv']['first']['users'][$invest->user] = $invest->user;
-                                $Data['tpv']['first']['invests']++;
-                                $Data['tpv']['first']['amount'] += $invest->amount;
-                            }
-                            $Data['tpv']['total'] = $Data['tpv']['first'];
-                        }
-
-
-                        // PAYPAL first
-                        $inv_paypal = self::getList(array(
-                            'methods' => 'paypal',
-                            'projects' => $project,
-                            'date_until' => $last_day
-                        ));
-                        if (!empty($inv_paypal)) {
-                            $Data['paypal']['first']['fail'] = 0;
-                            foreach ($inv_paypal as $invId => $invest) {
-                                if (in_array($invest->investStatus, array('0', '1', '3'))) {
-                                    // a ver si cargo pendiente es incidencia...
-                                    if ($invest->investStatus == 0 && ($p0 === 'first' || $p0 === 'all')) {
-                                        $Data['paypal']['first']['fail'] += $invest->amount;
-                                        $Data['note'][] = "El aporte paypal {$invId} no debería estar en estado '".self::status($invest->investStatus)."'";
-                                        continue;
-                                    }
-                                    $Data['paypal']['first']['users'][$invest->user] = $invest->user;
-                                    $Data['paypal']['first']['invests']++;
-                                    $Data['paypal']['first']['amount'] += $invest->amount;
-                                }
-                            }
-                            $Data['paypal']['total'] = $Data['paypal']['first'];
-                        }
-
-                        // CASH  second
-                        $inv_cash = self::getList(array(
-                            'methods' => 'cash',
-                            'projects' => $project,
-                            'investStatus' => '1',
-                            'date_from' => $passed
-
-                        ));
-                        if (!empty($inv_cash)) {
-                            $Data['cash']['second']['fail'] = 0;
-                            foreach ($inv_cash as $invId => $invest) {
-                                $Data['cash']['second']['users'][$invest->user] = $invest->user;
-                                $Data['cash']['total']['users'][$invest->user] = $invest->user;
-                                $Data['cash']['second']['invests']++;
-                                $Data['cash']['total']['invests']++;
-                                $Data['cash']['second']['amount'] += $invest->amount;
-                            }
-                            $Data['cash']['total']['amount'] += $Data['cash']['second']['amount'];
-                        }
-
-
-                        // TPV  second
-                        $inv_tpv = self::getList(array(
-                            'methods' => 'tpv',
-                            'projects' => $project,
-                            'investStatus' => '1',
-                            'date_from' => $passed
-
-                        ));
-                        if (!empty($inv_tpv)) {
-                            $Data['tpv']['second']['fail'] = 0;
-                            foreach ($inv_tpv as $invId => $invest) {
-                                $Data['tpv']['second']['users'][$invest->user] = $invest->user;
-                                $Data['tpv']['total']['users'][$invest->user] = $invest->user;
-                                $Data['tpv']['second']['invests']++;
-                                $Data['tpv']['total']['invests']++;
-                                $Data['tpv']['second']['amount'] += $invest->amount;
-                            }
-                            $Data['tpv']['total']['amount'] += $Data['tpv']['second']['amount'];
-                        }
-
-                        // PAYPAL second
-                        $inv_paypal = self::getList(array(
-                            'methods' => 'paypal',
-                            'projects' => $project,
-                            'date_from' => $passed
-                        ));
-                        if (!empty($inv_paypal)) {
-                            $Data['paypal']['second']['fail'] = 0;
-                            foreach ($inv_paypal as $invId => $invest) {
-                                if (in_array($invest->investStatus, array('0', '1', '3'))) {
-                                    // a ver si cargo pendiente es incidencia...
-                                    if ($invest->investStatus == 0 && $p0 === 'all') {
-                                        $Data['paypal']['second']['fail'] += $invest->amount;
-                                        $Data['paypal']['total']['fail'] += $invest->amount;
-                                        $Data['note'][] = "El aporte paypal {$invId} no debería estar en estado '".self::status($invest->investStatus)."'";
-                                        continue;
-                                    }
-                                    $Data['paypal']['second']['users'][$invest->user] = $invest->user;
-                                    $Data['paypal']['total']['users'][$invest->user] = $invest->user;
-                                    $Data['paypal']['second']['invests']++;
-                                    $Data['paypal']['total']['invests']++;
-                                    $Data['paypal']['second']['amount'] += $invest->amount;
-                                }
-                            }
-                            $Data['paypal']['total']['amount'] += $Data['paypal']['second']['amount'];
-                        }
-
-                        
-                    } else {
-                        $Data['note'][] = 'No se ha calculado bien el parametro $act_eq';
-                    }
-
-
-
-                    break;
-            }
+         public static function getReportData($booka, $status) {
+             $Data = array('Data');
 
              return $Data;
          }
 
+         public static function getReportIssues($id) {
+
+             $status = self::status();
+
+             $list = array();
+
+             $values = array(':id' => $id);
+
+             $sql = "SELECT
+                        invest.id as invest,
+                        user.id as user,
+                        user.name as userName,
+                        user.email as userEmail,
+                        invest.amount as amount,
+                        invest.status as status
+                    FROM invest
+                    INNER JOIN user
+                        ON user.id = invest.user
+                    WHERE invest.project = :id
+                    AND invest.issue = 1
+                    ORDER BY user.name DESC
+                    ";
+
+            $query = self::query($sql, $values);
+            foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $item) {
+                $item->statusName = $status[$item->status];
+                $list[] = $item;
+            }
+            return $list;
+
+
+         }
+
+         public static function setDetail($id, $type, $log) {
+             $values = array(
+                ':id' => $id,
+                ':type' => $type,
+                ':log' => $log
+            );
+
+            $sql = "REPLACE INTO invest_detail (invest, type, log, date)
+                VALUES (:id, :type, :log, NOW())";
+
+            self::query($sql, $values);
+
+
+         }
+
+         public static function getDetails($id) {
+
+             $list = array();
+
+             $values = array(':id' => $id);
+
+             $sql = "SELECT
+                        type,
+                        log,
+                        DATE_FORMAT(invest_detail.date, '%d/%m/%Y %H:%i:%s') as date
+                    FROM invest_detail
+                    WHERE invest = :id
+                    ORDER BY invest_detail.date DESC
+                    ";
+
+            $query = self::query($sql, $values);
+            foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $item) {
+                $list[] = $item;
+            }
+            return $list;
+
+
+         }
 
     }
     

@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,10 +18,9 @@
  *
  */
 
+namespace Base\Model\User {
 
-namespace Goteo\Model\User {
-
-    class Web extends \Goteo\Core\Model {
+    class Web extends \Base\Core\Model {
 
         public
             $id,
@@ -30,9 +29,9 @@ namespace Goteo\Model\User {
 
 
         /**
-         * Get the interests for a user
+         * Get the webs for a user
          * @param varcahr(50) $id  user identifier
-         * @return array of interests identifiers
+         * @return array of webs
          */
 	 	public static function get ($id) {
             try {
@@ -41,7 +40,7 @@ namespace Goteo\Model\User {
 
                 return $webs;
             } catch(\PDOException $e) {
-				throw new \Goteo\Core\Exception($e->getMessage());
+				throw new \Base\Core\Exception($e->getMessage());
             }
 		}
 

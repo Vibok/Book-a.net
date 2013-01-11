@@ -18,17 +18,15 @@
  *
  */
 
+namespace Base\Model {
 
-namespace Goteo\Model {
+    use Base\Library\Check,
+        Base\Library\Text;
 
-    use Goteo\Library\Check,
-        Goteo\Library\Text;
-
-    class Faq extends \Goteo\Core\Model {
+    class Faq extends \Base\Core\Model {
 
         public
             $id,
-            $node,
             $section,
             $title,
             $description,
@@ -40,60 +38,30 @@ namespace Goteo\Model {
         public static function get ($id) {
                 $query = static::query("
                     SELECT
-                        faq.id as id,
-                        faq.node as node,
-                        faq.section as section,
-                        IFNULL(faq_lang.title, faq.title) as title,
-                        IFNULL(faq_lang.description, faq.description) as description,
-                        faq.order as `order`
+                        *
                     FROM faq
-                    LEFT JOIN faq_lang
-                        ON  faq_lang.id = faq.id
-                        AND faq_lang.lang = :lang
                     WHERE faq.id = :id
-                    ", array(':id' => $id, ':lang'=>\LANG));
+                    ", array(':id' => $id));
                 $faq = $query->fetchObject(__CLASS__);
 
                 return $faq;
         }
 
         /*
-         * Lista de proyectos destacados
+         * Lista de Bookas destacados
          */
-        public static function getAll ($section = 'node') {
+        public static function getAll ($section = 'main') {
 
             $values = array(':section' => $section);
 
             $sql = "
                 SELECT
-                    faq.id as id,
-                    faq.node as node,
-                    faq.section as section,";
-
-            if (\LANG != 'es') {
-                $sql .= "
-                    faq_lang.title as title,
-                    faq_lang.description as description,";
-            } else {
-                $sql .= "
-                    faq.title as title,
-                    faq.description as description,";
-            }
-
-            $sql .= "
-                    faq.order as `order`
-                FROM faq";
-
-            if (\LANG != 'es') {
-                $sql .= "
-                INNER JOIN faq_lang
-                    ON  faq_lang.id = faq.id
-                    AND faq_lang.lang = :lang
-                ";
-                $values[':lang'] = \LANG;
-            }
-
-            $sql .= "
+                    id,
+                    section,
+                    IFNULL(title_".\LANG.", title_es) as title,
+                    IFNULL(description_".\LANG.", description_es) as description,
+                    `order`
+                FROM faq
                 WHERE faq.section = :section
                 ORDER BY `order` ASC, title ASC
                 ";
@@ -104,17 +72,11 @@ namespace Goteo\Model {
         }
 
         public function validate (&$errors = array()) { 
-            if (empty($this->node))
-                $errors[] = 'Falta nodo';
-                //Text::get('mandatory-faq-node');
-
             if (empty($this->section))
                 $errors[] = 'Falta seccion';
-                //Text::get('mandatory-faq-section');
 
-            if (empty($this->title))
+            if (empty($this->title_es))
                 $errors[] = 'Falta título';
-                //Text::get('mandatory-faq-title');
 
             if (empty($errors))
                 return true;
@@ -127,10 +89,11 @@ namespace Goteo\Model {
 
             $fields = array(
                 'id',
-                'node',
                 'section',
-                'title',
-                'description',
+                'title_es',
+                'title_en',
+                'description_es',
+                'description_en',
                 'order'
                 );
 
@@ -149,8 +112,7 @@ namespace Goteo\Model {
                 if (empty($this->id)) $this->id = self::insertId();
 
                 $extra = array(
-                    'section' => $this->section,
-                    'node' => $this->node
+                    'section' => $this->section
                 );
                 Check::reorder($this->id, $this->move, 'faq', 'id', 'order', $extra);
 
@@ -164,10 +126,10 @@ namespace Goteo\Model {
         /*
          * Para quitar una pregunta
          */
-        public static function delete ($id, $node = \GOTEO_NODE) {
+        public static function delete ($id) {
             
-            $sql = "DELETE FROM faq WHERE id = :id AND node = :node";
-            if (self::query($sql, array(':id'=>$id, ':node'=>$node))) {
+            $sql = "DELETE FROM faq WHERE id = :id";
+            if (self::query($sql, array(':id'=>$id))) {
                 return true;
             } else {
                 return false;
@@ -178,12 +140,11 @@ namespace Goteo\Model {
         /*
          * Para que una pregunta salga antes  (disminuir el order)
          */
-        public static function up ($id, $node = \GOTEO_NODE) {
+        public static function up ($id) {
             $query = static::query("SELECT section FROM faq WHERE id = ?", array($id));
             $faq = $query->fetchObject();
             $extra = array(
-                'section' => $faq->section,
-                'node' => $node
+                'section' => $faq->section
             );
             return Check::reorder($id, 'up', 'faq', 'id', 'order', $extra);
         }
@@ -191,12 +152,11 @@ namespace Goteo\Model {
         /*
          * Para que un proyecto salga despues  (aumentar el order)
          */
-        public static function down ($id, $node = \GOTEO_NODE) {
+        public static function down ($id) {
             $query = static::query("SELECT section FROM faq WHERE id = ?", array($id));
             $faq = $query->fetchObject();
             $extra = array(
-                'section' => $faq->section,
-                'node' => $node
+                'section' => $faq->section
             );
             return Check::reorder($id, 'down', 'faq', 'id', 'order', $extra);
         }
@@ -204,9 +164,9 @@ namespace Goteo\Model {
         /*
          * Orden para añadirlo al final
          */
-        public static function next ($section = 'node', $node = \GOTEO_NODE) {
-            $query = self::query('SELECT MAX(`order`) FROM faq WHERE section = :section AND node = :node'
-                , array(':section'=>$section, ':node'=>$node));
+        public static function next ($section = 'main') {
+            $query = self::query('SELECT MAX(`order`) FROM faq WHERE section = :section'
+                , array(':section'=>$section));
             $order = $query->fetchColumn(0);
             return ++$order;
 
@@ -214,24 +174,13 @@ namespace Goteo\Model {
 
         public static function sections () {
             return array(
-                'node' => Text::get('faq-main-section-header'),
-                'project' => Text::get('faq-project-section-header'),
-                'sponsor' => Text::get('faq-sponsor-section-header'),
+                'main' => Text::get('faq-main-section-header'),
+                'bookas' => Text::get('faq-bookas-section-header'),
                 'investors' => Text::get('faq-investors-section-header'),
-                'nodes' => Text::get('faq-nodes-section-header')
+                'readers' => Text::get('faq-readers-section-header'),
+                'mixers' => Text::get('faq-mixers-section-header')
             );
         }
-
-        public static function colors () {
-            return array(
-                'node' => '#808285',
-                'project' => '#20b3b2',
-                'sponsor' => '#96238f',
-                'investors' => '#0c4e99',
-                'nodes' => '#8f8f8f'
-            );
-        }
-
 
     }
     

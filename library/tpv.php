@@ -18,11 +18,11 @@
  *
  */
 
-namespace Goteo\Library {
+namespace Base\Library {
 
-    use Goteo\Model\Invest,
-        Goteo\Model\Project,
-        Goteo\Core\Redirection;
+    use Base\Model\Invest,
+        Base\Model\Booka,
+        Base\Core\Redirection;
 
 	/*
 	 * Clase para usar la pasarela de pago
@@ -48,7 +48,7 @@ namespace Goteo\Library {
         public static function cancelPay($invest, &$errors = array()) {
             if (\GOTEO_FREE) {
                 return false;
-            }
+
         }
 
 	}

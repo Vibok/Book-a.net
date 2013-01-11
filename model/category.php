@@ -18,73 +18,60 @@
  *
  */
 
+namespace Base\Model {
 
-namespace Goteo\Model {
-
-    use Goteo\Library\Check;
+    use Base\Library\Check;
     
-    class Category extends \Goteo\Core\Model {
+    class Category extends \Base\Core\Model {
 
         public
             $id,
-            $name,
-            $description,
-            $used; // numero de proyectos que usan la categoria
+            $name_es,
+            $name_en,
+            $move, // para ordenar al crear
+            $used; // numero de Bookas que usan la categoria
 
         /*
          *  Devuelve datos de una categoria
          */
         public static function get ($id) {
-                $query = static::query("
-                    SELECT
-                        category.id,
-                        IFNULL(category_lang.name, category.name) as name,
-                        IFNULL(category_lang.description, category.description) as description
-                    FROM    category
-                    LEFT JOIN category_lang
-                        ON  category_lang.id = category.id
-                        AND category_lang.lang = :lang
-                    WHERE category.id = :id
-                    ", array(':id' => $id, ':lang'=>\LANG));
-                $category = $query->fetchObject(__CLASS__);
+            
+            $query = static::query("
+                SELECT
+                    *,
+                    IFNULL(name_".LANG.", name_es) as name
+                FROM    category
+                WHERE category.id = :id
+                ", array(':id' => $id));
+            $category = $query->fetchObject(__CLASS__);
 
-                return $category;
+            return $category;
         }
 
         /*
-         * Lista de categorias para proyectos
+         * Lista de categorias para Bookas
          * @TODO añadir el numero de usos
          */
-        public static function getAll () {
+        public static function getAll ($limit = null) {
 
             $list = array();
 
             $sql = "
                 SELECT
-                    category.id as id,
-                    IFNULL(category_lang.name, category.name) as name,
-                    IFNULL(category_lang.description, category.description) as description,
-                    (   SELECT 
-                            COUNT(project_category.project)
-                        FROM project_category
-                        WHERE project_category.category = category.id
-                    ) as numProj,
-                    (   SELECT
-                            COUNT(user_interest.user)
-                        FROM user_interest
-                        WHERE user_interest.interest = category.id
-                    ) as numUser,
-                    category.order as `order`
+                    *,
+                    IFNULL(name_".LANG.", name_es) as name
                 FROM    category
-                LEFT JOIN category_lang
-                    ON  category_lang.id = category.id
-                    AND category_lang.lang = :lang
                 ORDER BY `order` ASC
                 ";
-
-            $query = static::query($sql, array(':lang'=>\LANG));
+            
+            if (!empty($limit)) {
+                $sql .= "LIMIT $limit";
+            }
+            
+            $query = static::query($sql);
 
             foreach ($query->fetchAll(\PDO::FETCH_CLASS, __CLASS__) as $category) {
+                $category->used = static::used($category->id);
                 $list[$category->id] = $category;
             }
 
@@ -92,7 +79,7 @@ namespace Goteo\Model {
         }
 
         /**
-         * Get all categories used in published projects
+         * Lista simple id=>nombre
          *
          * @param void
          * @return array
@@ -101,20 +88,11 @@ namespace Goteo\Model {
             $array = array ();
             try {
                 $sql = "SELECT 
-                            category.id as id,
-                            IFNULL(category_lang.name, category.name) as name
+                            id, name_es
                         FROM category
-                        LEFT JOIN category_lang
-                            ON  category_lang.id = category.id
-                            AND category_lang.lang = :lang
-                        LEFT JOIN project_category
-                            ON category.id = project_category.category
-                        LEFT JOIN user_interest
-                            ON category.id = user_interest.interest
-                        GROUP BY category.id
                         ORDER BY category.order ASC";
 
-                $query = static::query($sql, array(':lang'=>\LANG));
+                $query = static::query($sql);
                 $categories = $query->fetchAll();
                 foreach ($categories as $cat) {
                     $array[$cat[0]] = $cat[1];
@@ -122,15 +100,14 @@ namespace Goteo\Model {
 
                 return $array;
             } catch(\PDOException $e) {
-				throw new \Goteo\Core\Exception($e->getMessage());
+				throw new \Base\Core\Exception($e->getMessage());
             }
 		}
 
         
         public function validate (&$errors = array()) { 
-            if (empty($this->name))
+            if (empty($this->name_es))
                 $errors[] = 'Falta nombre';
-                //Text::get('mandatory-category-name');
 
             if (empty($errors))
                 return true;
@@ -143,8 +120,9 @@ namespace Goteo\Model {
 
             $fields = array(
                 'id',
-                'name',
-                'description'
+                'name_es',
+                'name_en',
+                'order'
                 );
 
             $set = '';
@@ -205,6 +183,17 @@ namespace Goteo\Model {
             return ++$order;
 
         }
+
+        /*
+         * Cuenta el numero de bookas que la usan
+         */
+        public static function used ($id) {
+            $query = self::query('SELECT COUNT(DISTINCT(booka)) FROM booka_category WHERE category = ? ', array($id));
+            $num = $query->fetchColumn(0);
+            return $num;
+
+        }
+
     }
     
 }

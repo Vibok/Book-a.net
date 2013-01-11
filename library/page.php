@@ -17,11 +17,11 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
+namespace Base\Library {
 
-namespace Goteo\Library {
-
-	use Goteo\Core\Model,
-        Goteo\Core\Exception;
+	use Base\Core\Model,
+        Base\Core\Exception,
+        Base\Library\Check;
 
 	/*
 	 * Clase para gestionar el contenido de las páginas institucionales
@@ -30,45 +30,25 @@ namespace Goteo\Library {
 
         public
             $id,
-            $lang,
-            $node,
             $name,
-            $description,
+            $text_es,
+            $text_en,
             $url,
-            $content,
-            $pendiente; // para si esta pendiente de traduccion
+            $content_es,
+            $content_en,
+            $order;
 
-        static public function get ($id, $lang = \LANG, $node = \GOTEO_NODE) {
+        static public function get ($id) {
 
-            // buscamos la página para este nodo en este idioma
-			$sql = "SELECT  page.id as id,
-                            IFNULL(page_lang.name, page.name) as name,
-                            IFNULL(page_lang.description, page.description) as description,
-                            page.url as url,
-                            IFNULL(page_node.lang, '$lang') as lang,
-                            IFNULL(page_node.node, '$node') as node,
-                            IFNULL(page_node.content, original.content) as content
+            // buscamos la página
+			$sql = "SELECT  *,
+                        IF(text_".\LANG." = '', text_es, text_".\LANG.") as text,
+                        IF(content_".\LANG." = '', content_es, content_".\LANG.") as content
                      FROM page
-                     LEFT JOIN page_lang
-                        ON  page_lang.id = page.id
-                        AND page_lang.lang = :lang
-                     LEFT JOIN page_node
-                        ON  page_node.page = page.id
-                        AND page_node.lang = :lang
-                        AND page_node.node = :node
-                     LEFT JOIN page_node as original
-                        ON  original.page = page.id
-                        AND original.node = :node
-                        AND original.lang = 'es'
                      WHERE page.id = :id
                 ";
 
-			$query = Model::query($sql, array(
-                                            ':id' => $id,
-                                            ':lang' => $lang,
-                                            ':node' => $node
-                                        )
-                                    );
+			$query = Model::query($sql, array(':id' => $id));
 			$page = $query->fetchObject(__CLASS__);
             return $page;
 		}
@@ -76,28 +56,16 @@ namespace Goteo\Library {
 		/*
 		 *  Metodo para la lista de páginas
 		 */
-		public static function getAll($lang = \LANG, $node = \GOTEO_NODE) {
+		public static function getAll() {
             $pages = array();
 
             try {
 
-                $values = array(':lang' => $lang, ':node' => $node);
-
-                $sql = "SELECT
-                            page.id as id,
-                            IFNULL(page_lang.name, page.name) as name,
-                            IFNULL(page_lang.description, page.description) as description,
-                            IF(page_node.content IS NULL, 1, 0) as pendiente,
-                            page.url as url
+                $sql = "SELECT  *,
+                            IFNULL(text_".\LANG.", text_es) as text,
+                            IFNULL(content_".\LANG.", content_es) as content
                         FROM page
-                        LEFT JOIN page_lang
-                            ON  page_lang.id = page.id
-                            AND page_lang.lang = :lang
-                         LEFT JOIN page_node
-                            ON  page_node.page = page.id
-                            AND page_node.lang = :lang
-                            AND page_node.node = :node
-                        ORDER BY pendiente DESC, name ASC
+                        ORDER BY `order` ASC
                         ";
 
                 $query = Model::query($sql, $values);
@@ -115,17 +83,12 @@ namespace Goteo\Library {
             $allok = true;
 
             if (empty($this->id)) {
-                $errors[] = 'Registro sin id';
+                $errors[] = 'Falta identificador';
                 $allok = false;
             }
 
-            if (empty($this->lang)) {
-                $errors[] = 'Registro sin lang';
-                $allok = false;
-            }
-
-            if (empty($this->node)) {
-                $errors[] = 'Registro sin node';
+            if (empty($this->name)) {
+                $errors[] = 'Falta nombre';
                 $allok = false;
             }
 
@@ -141,33 +104,23 @@ namespace Goteo\Library {
   			try {
                 $values = array(
                     ':id' => $this->id,
-                    ':name' => $this->name,
-                    ':description' => $this->description
+                    ':text_es' => $this->text_es,
+                    ':text_en' => $this->text_en,
+                    ':content_es' => $this->content_es,
+                    ':content_en' => $this->content_en
                 );
 
 				$sql = "UPDATE page
-                            SET name = :name,
-                                description = :description
+                            SET text_es = :text_es,
+                                text_en = :text_en,
+                                content_es = :content_es,
+                                content_en = :content_en
                             WHERE id = :id
-                        ";
-				Model::query($sql, $values);
-
-                $values = array(
-                    ':page' => $this->id,
-                    ':lang' => $this->lang,
-                    ':node' => $this->node,
-                    ':contenido' => $this->content
-                );
-
-				$sql = "REPLACE INTO page_node
-                            (page, node, lang, content)
-                        VALUES
-                            (:page, :node, :lang, :contenido)
                         ";
 				if (Model::query($sql, $values)) {
                     return true;
                 } else {
-                    $errors[] = "Ha fallado $sql con <pre>" . print_r($values, 1) . "</pre>";
+                    $errors[] = "Ha fallado $sql con " . \trace($values);
                     return false;
                 }
                 
@@ -178,29 +131,42 @@ namespace Goteo\Library {
 
 		}
 
-        /**
-         * PAra actualizar solamente el contenido
-         * @param <type> $errors
-         * @return <type>
-         */
-		public function update($id, $lang, $content, &$errors = array()) {
+		/*
+		 *  Esto se usara para la gestión de contenido
+		 */
+		public function add(&$errors = array()) {
+            if(!$this->validate($errors)) { return false; }
+
   			try {
+                // primero verificar id unico
+                $sql = "SELECT  id
+                         FROM page
+                         WHERE page.id = :id
+                    ";
+
+                $query = Model::query($sql, array(':id' => $this->id));
+                $exist = $query->fetchColumn();
+                if ($exist) {
+                    $errors[] = "Ya existe una página con este identificador, ponle otro identificador (que sea reprresentativo del contenido de la página, por favor).";
+                    return false;
+                }
+                
                 $values = array(
-                    ':page' => $id,
-                    ':lang' => $lang,
-                    ':node' => \GOTEO_NODE,
-                    ':contenido' => $content
+                    ':id' => $this->id,
+                    ':name' => $this->name,
+                    ':url' => '/about/'.$this->id,
+                    ':order' => $this->order
                 );
 
-				$sql = "REPLACE INTO page_node
-                            (page, node, lang, content)
+				$sql = "INSERT INTO page
+                            (id, name, url, `order`)
                         VALUES
-                            (:page, :node, :lang, :contenido)
+                            (:id, :name, :url, :order)
                         ";
 				if (Model::query($sql, $values)) {
                     return true;
                 } else {
-                    $errors[] = "Ha fallado $sql con <pre>" . print_r($values, 1) . "</pre>";
+                    $errors[] = "Ha fallado $sql con " . \trace($values);
                     return false;
                 }
 
@@ -210,7 +176,30 @@ namespace Goteo\Library {
 			}
 
 		}
+        
+        /*
+         * Para que salga antes  (disminuir el order)
+         */
+        public static function up ($id) {
+            return Check::reorder($id, 'up', 'page', 'id', 'order');
+        }
 
+        /*
+         * Para que salga despues  (aumentar el order)
+         */
+        public static function down ($id) {
+            return Check::reorder($id, 'down', 'page', 'id', 'order');
+        }
+
+        /*
+         * Orden para añadirlo al final
+         */
+        public static function next () {
+            $query = self::query('SELECT MAX(`order`) FROM page');
+            $order = $query->fetchColumn(0);
+            return ++$order;
+
+        }
 
 	}
 }

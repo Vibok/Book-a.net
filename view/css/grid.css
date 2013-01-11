@@ -1,0 +1,118 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* Estilos para estructurar filas y columnas */
+.bloque {
+    display: block !important;
+}
+
+.clear {
+    clear: both;
+}
+
+/* Main container */
+div#main {
+    width: 940px;
+    margin: 0 auto 25px;
+    clear: both;
+    overflow: hidden;
+    padding-bottom: 5px;
+    position: relative;
+    z-index: 0;
+}
+
+/* cajas */
+div.widget {
+    width: 868px; /* para que se vea el sombreado */
+    padding: 15px 35px;
+    overflow: hidden;
+}
+
+/* los titulos de pastilla */
+h2.htitle {
+    margin:  -15px -35px 0px -37px;
+    padding: 8px 37px;
+}
+
+h3.htitle {
+    margin:  -20px -33px 0px -37px;
+    padding: 8px 37px;
+}
+
+h4.htitle {
+    margin: 0 !important;
+    padding: 11px 20px 8px;
+    height: 13px;
+}
+
+/* columna central */
+div#main.sided div.center > div.center-widget,
+div#main.sided div.side > div.side-widget {
+    padding: 20px 25px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+div#main.sided div.center {
+    float: left;
+    margin-right: 20px;
+}
+
+div#main.sided div.center > div.center-widget {
+    width: 568px; /* son 620 menos 2 de sombra menos 50 de padding*/
+}
+
+/* columna lateral */
+div#main.sided div.side {
+    float: left;
+    display: inline-block;    
+    margin-bottom: -20px;
+}
+
+div#main.sided div.side > div.side-widget {
+    width: 248px; /* son 300 menos 2 de sombra menos 50 de padding*/
+}
+
+/* tres comlumnas para la pagina de accede */
+div#main div.three-cols {
+    float: left;
+    display: inline-block;    
+    width: 298px;
+}
+
+div.three-cols + div.three-cols {
+    margin-left: 22px;
+}
+
+div.three-cols h3.htitle {
+    width: 257px;
+    margin: 0 !important;
+    padding: 11px 20px 8px !important;
+}
+
+/* los estilos para lista de bookas en resultadod e búsqueda */
+body.search div.results-list-item div.booka-item {
+    padding: 15px 0;
+    width: 615px;
+    height: 140px;
+}
+
+body.search div.results-list-item div.booka-item div.status {
+    position: relative;
+    z-index: 999;
+}

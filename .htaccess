@@ -22,9 +22,13 @@ ServerSignature Off
 </IfModule>
 
 <IfModule mod_rewrite.c>  
-  # TODO: prohibir el acceso directo a index.php
   RewriteEngine On  
   RewriteBase /
+
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
+
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule .* index.php?%{QUERY_STRING}
 </IfModule>

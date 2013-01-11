@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -17,22 +17,21 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
-use Goteo\Core\View;
+use Base\Core\View;
 ?>
-<label>
+<label class="ft3">
 
-    <?php if (isset($this['label'])): ?>
-    <?php echo htmlspecialchars($this['label']) ?>
-    <?php endif ?>
     
     <input id="<?php echo htmlspecialchars($this['id']) ?>" type="radio" name="<?php echo htmlspecialchars($this['name']) ?>" value="<?php echo htmlspecialchars($this['value']) ?>"<?php if ($this['checked']) echo 'checked="checked"' ?> />
+    <?php if (isset($this['label'])) echo htmlspecialchars($this['label']); ?>
     
 </label>
 
 <?php if (!empty($this['children'])): ?>
 <div class="<?php if (!$this['checked']) echo 'jshidden ' ?>children" id="<?php echo htmlspecialchars($this['id']) ?>-children">
-        <?php echo new View('library/superform/view/elements.html.php', Goteo\Library\SuperForm::getChildren($this['children'], $this['level'])) ?>
+        <?php echo new View('library/superform/view/elements.html.php', Base\Library\SuperForm::getChildren($this['children'], $this['level'])) ?>
 </div>
+<?php  /*
 <script type="text/javascript">
 $(function () {
    $("div.superform input#<?php echo $this['id'] ?>").click(function () {
@@ -49,8 +48,11 @@ $(function () {
    });
 });  
 </script>
+ */ ?>
 <?php endif; ?>
 
+<?php  /*
 <script type="text/javascript">
 <?php include __DIR__ . '/radio.js.src.php' ?>
 </script>
+ */ ?>

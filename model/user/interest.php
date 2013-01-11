@@ -18,12 +18,11 @@
  *
  */
 
+namespace Base\Model\User {
 
-namespace Goteo\Model\User {
+    use Base\Model\Image;
 
-    use Goteo\Model\Image;
-
-    class Interest extends \Goteo\Model\Category {
+    class Interest extends \Base\Model\Category {
 
         public
             $id,
@@ -46,7 +45,7 @@ namespace Goteo\Model\User {
 
                 return $array;
             } catch(\PDOException $e) {
-				throw new \Goteo\Core\Exception($e->getMessage());
+				throw new \Base\Core\Exception($e->getMessage());
             }
 		}
 
@@ -60,17 +59,13 @@ namespace Goteo\Model\User {
 		public static function getAll ($user = null) {
             $array = array ();
             try {
-                $values = array(':lang'=>\LANG);
+                $values = array();
                 $sql = "
                     SELECT
                         category.id as id,
-                        IFNULL(category_lang.name, category.name) as name
+                        IFNULL(category.name_".LANG.", category.name_es) as name
                     FROM    category
-                    LEFT JOIN category_lang
-                        ON  category_lang.id = category.id
-                        AND category_lang.lang = :lang
-
-                        ";
+                    ";
                 if (!empty($user)) {
                     $sql .= "INNER JOIN user_interest
                                 ON  user_interest.interest = category.id
@@ -89,7 +84,7 @@ namespace Goteo\Model\User {
 
                 return $array;
             } catch(\PDOException $e) {
-				throw new \Goteo\Core\Exception($e->getMessage());
+				throw new \Base\Core\Exception($e->getMessage());
             }
 		}
 
@@ -156,13 +151,16 @@ namespace Goteo\Model\User {
          * Si recibimos una categoría de interés, solamente los que comparten esa categoría
          *
          */
-        public static function share ($user, $category = null) {
+        public static function share ($user, $category = null, $limit = null) {
              $array = array ();
             try {
 
                 $values = array(':me'=>$user);
 
-               $sql = "SELECT DISTINCT(user_interest.user) as id
+               $sql = "SELECT 
+                            DISTINCT(user_interest.user) as id, 
+                            user.name as name,
+                            user.avatar as avatar
                         FROM user_interest
                         INNER JOIN user_interest as mine
                             ON user_interest.interest = mine.interest
@@ -173,35 +171,42 @@ namespace Goteo\Model\User {
                         WHERE user_interest.user != :me
                         ";
                if (!empty($category)) {
-                   $sql .= "AND user_interest.interest = :interest";
+                   $sql .= "AND user_interest.interest = :interest
+                       ";
                    $values[':interest'] = $category;
                }
+               $sql .= " ORDER BY RAND()";
+               if (!empty($limit)) {
+                   $sql .= " LIMIT $limit";
+               }
+               
+               /*
+               if ($_SESSION['user']->id == 'root') {
+                   echo $sql . '<br />';
+                   echo \trace($values);
+               }
+                */
 
                 $query = static::query($sql, $values);
                 $shares = $query->fetchAll(\PDO::FETCH_ASSOC);
                 foreach ($shares as $share) {
 
-                    // nombre i avatar
-                    $user = \Goteo\Model\User::get($share['id']);
-                    if (empty($user->avatar)) $user->avatar = Image::get(1);
-                    // meritocracia
-                    $support = (object) $user->support;
-                    // proyectos publicados
-                    $query = self::query('SELECT COUNT(id) FROM project WHERE owner = ? AND status > 2', array($share['id']));
-                    $projects = $query->fetchColumn(0);
-
-                    $array[] = (object) array(
-                        'user' => $share['id'],
-                        'avatar' => $user->avatar,
-                        'name' => $user->name,
-                        'projects' => $projects,
-                        'invests' => $support->invests
-                    );
+                    // nombre i avatar vienen en la sentencia, hay que sacar la imagen
+                    $share['user'] = $share['id'];
+                    $share['avatar'] = (empty($share['avatar'])) ? Image::get(1) : Image::get($share['avatar']);
+                    if (!$share['avatar'] instanceof Image) {
+                        $share['avatar'] = Image::get(1);
+                    }
+                    
+                    // lista de intereses
+                    $share['interests'] = static::getAll($share['id']);
+                    
+                    $array[] = (object) $share;
                 }
 
                 return $array;
             } catch(\PDOException $e) {
-				throw new \Goteo\Core\Exception($e->getMessage());
+				throw new \Base\Core\Exception($e->getMessage());
             }
         }
 
@@ -228,7 +233,7 @@ namespace Goteo\Model\User {
                 foreach ($shares as $share) {
 
                     // nombre i avatar
-                    $user = \Goteo\Model\User::get($share['id']);
+                    $user = \Base\Model\User::get($share['id']);
                     if (empty($user->avatar)) $user->avatar = (object) array('id'=>1);
                     // meritocracia
                     $support = (object) $user->support;
@@ -247,7 +252,7 @@ namespace Goteo\Model\User {
 
                 return $array;
             } catch(\PDOException $e) {
-				throw new \Goteo\Core\Exception($e->getMessage());
+				throw new \Base\Core\Exception($e->getMessage());
             }
         }
 

@@ -1,0 +1,530 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* sirve tambien para el precio+boton de las recompensas */
+div.booka-stats {
+    display: inline-block;
+    float: left;
+}
+
+div.booka-stats + div.booka-stats {
+    float: right !important;
+}
+
+div#booka-support div.hr {
+    padding: 5px 0;
+}
+
+div#booka-support div.button {
+    width: 188px;
+    margin: 25px 33px 10px;
+}
+
+div#booka-stages {
+    margin-bottom: 40px !important;
+}
+
+/* recompensas */
+div#booka-rewards ul li {
+    padding: 20px 0;
+}
+
+div.booka-gallery-container {
+    height: 390px !important;
+}
+
+ul.slide-ctrl {
+    padding-top: 10px;
+}
+
+div.legend {
+    float: right;
+    margin-top: 5px;
+}
+
+div.legend.concarrusel {
+    margin-top: -20px !important;
+}
+
+div.center-widget h4 {
+    margin-bottom: 15px;
+}
+
+div.center-widget div.booka-content {
+    margin-bottom: 20px;
+}
+
+div.center-widget div.booka-content p,
+div.center-widget div.booka-content p > * {
+    font-size: 14px;
+    line-height: 19px;
+}
+
+div.center-widget h3 {
+    margin-top: 0 !important;
+    padding-bottom: 12px;
+}
+
+
+/* lista de comentarios */
+div.comment {
+    padding: 3px 0;
+    display: block;
+}
+
+div.comment div.avatar,
+div.comment div.content {
+    display: inline-block;
+    float: left;
+    margin: 10px 0;
+}
+
+div.comment div.avatar {
+    width: 60px;
+    margin-right: 10px;
+}
+
+div.comment div.content a.user {
+    margin-bottom: 6px;
+}
+
+div.comment div.content div.text {
+    margin-top: 10px;
+    max-width: 290px;
+    line-height: 19px;
+}
+
+/* fin lista comentarios */
+
+/* especial para barra de compartir en portada de booka */
+body.booka ul.share {
+    float: none !important;
+}
+
+/* para lateral de recompensas */
+div#booka-rewards p {
+    line-height: 14px;
+}
+
+/* Específicos para el superformulario de booka */
+
+/* registros cerrados */
+div.superform li#costs,
+div.superform li.element.cost,
+div.superform li#rewards,
+div.superform li.element.reward {
+    padding: 0 !important;
+}
+
+div.superform div.cost,
+div.superform div.reward {
+    margin-top: 20px;
+}
+
+div.superform li.element.cost + li.element.cost,
+div.superform li.element.reward + li.element.reward {
+    border-top: 1px dashed #C9C6A3;
+}
+
+/* iconos de etapa */
+div.superform div.cost {
+    padding-left: 55px;
+    background-position: left top;
+    background-repeat: no-repeat;
+    background-color: transparent;
+}
+
+div.superform div.cost.stage1 {
+    background-image: url('/view/css/assets/badge/stage1.png');
+}
+div.superform div.cost.stage2 {
+    background-image: url('/view/css/assets/badge/stage2.png');
+}
+div.superform div.cost.stage3 {
+    background-image: url('/view/css/assets/badge/stage3.png');
+}
+
+div.superform div.cost div.title,
+div.superform div.reward div.title {
+    margin-bottom: 10px;
+}
+
+div.superform div.cost div.title span,
+div.superform div.reward div.title span {
+    float: right;
+    text-align: right;
+}
+
+div.superform div.cost div.description,
+div.superform div.reward div.description {
+    width: 445px;
+}
+
+div.superform div.reward div.units {
+    display: block;
+    margin-top:  10px;
+}
+
+div.superform div.reward-buttons,
+div.superform div.cost-buttons {
+    display: block;
+    text-align: right;
+    margin:  12px 0;
+}
+
+div.superform div.reward-buttons input + input,
+div.superform div.cost-buttons input + input {
+    margin-left: 20px;
+}
+
+div#booka-needs h3.stage1, 
+div#booka-needs h3.stage2, 
+div#booka-needs h3.stage3 {
+    padding: 8px 0px 20px 47px;
+    background-color: transparent;
+    background-position: 0px 0px;
+    background-repeat: no-repeat;
+    margin-bottom: 8px;
+}
+
+div#booka-needs h3.stage1 {
+    background-image: url('/view/css/assets/badge/stage1.png');
+}
+
+div#booka-needs h3.stage2 {
+    background-image: url('/view/css/assets/badge/stage2.png');
+}
+
+div#booka-needs h3.stage3 {
+    background-image: url('/view/css/assets/badge/stage3.png');
+}
+
+div#booka-needs td.need span {
+    margin-bottom: 10px;
+}
+
+div#booka-needs table {
+    border-collapse: collapse;
+}
+
+div#booka-needs table td.need {
+    padding: 10px 0px;
+}
+
+div#booka-needs table td.need span {
+    display: block;
+    margin-bottom: 6px;
+} 
+
+div#booka-needs table td.need blockquote{
+    padding: 0;
+    margin: 5px 0 0px;
+    text-align: left;
+    width: 90%;
+    line-height: 14px;
+}
+
+div#booka-needs table td.amount {
+    text-align: right;
+}
+
+div#booka-needs table tr.subtotal td {
+    padding: 12px 0;
+}
+
+div#booka-needs table tr.total td {
+    padding: 10px 0px;
+}
+
+div#booka-needs table td.need.info {
+    padding-bottom: 30px !important;
+}
+
+/* Widget central de cofinanciadiores: div#booka-investors */
+div#booka-investors {
+    clear: both;
+}
+
+div#booka-investors ul {
+    margin-left: -60px;
+}
+
+div#booka-investors ul li {
+    float: left;
+    margin-left: 60px;
+}
+
+div.center-widget {
+    margin-bottom: 10px;
+}
+
+/* Mensaje/saludo */
+div.center-widget.invest-message {
+    min-height: 70px;
+}
+
+div.center-widget.invest-message div.greeting {
+    padding-bottom: 10px;
+}
+
+div.center-widget.invest-message div.message {
+    margin: 20px 0 10px;
+    max-width: 480px;
+    line-height: 30px;
+}
+/* fin mensaje*/
+
+div.center-widget.booka-invest.address table {
+    width: 100%;
+}
+div.center-widget.booka-invest.address table tr {
+}
+div.center-widget.booka-invest.address table tr td label {
+}
+div.center-widget.booka-invest.address table tr td input {
+    width: 100%;
+    margin-top: 3px;
+}
+
+div.center-widget.booka-invest #amount {
+    padding: 6px 10px;
+    width: 252px;
+    height: 18px;
+    margin: 15px 0px;
+}
+
+div.center-widget.booka-invest.method div.buttons {
+    width: 50%;
+    float:left;
+}
+
+div.center-widget.booka-invest.method button {
+    margin-bottom: 10px;
+    display: block;
+    border: none;
+}
+
+div.center-widget.booka-invest.method button.pay-tpv {
+    background: url('/view/css/assets/buttons/tpv.gif') no-repeat 0 0 transparent;
+    width: 178px;
+    height: 35px;
+    text-indent: 2000px;
+    padding: 3px;
+}
+
+div.center-widget.booka-invest.method button.pay-paypal {
+    background: url('/view/css/assets/buttons/paypal.gif') no-repeat 0 0 transparent;
+    width: 145px;
+    height: 32px;
+    text-indent: 2000px;
+    padding: 3px;
+    
+    border-radius: 15px; 
+    -o-border-radius: 15px;
+    -moz-border-radius: 15px;
+    -webkit-border-radius: 15px;
+    
+    
+}
+
+div.center-widget.booka-invest.method button.pay-tpv:hover,
+div.center-widget.booka-invest.method button.pay-paypal:hover {
+    border: 1px solid #669999;
+}
+
+div.center-widget.booka-invest div.reminder {
+    width: 40%;
+    float: left;
+}
+
+div.center-widget.booka-invest div.reminder #amount-reminder {
+    margin-left: 5px;
+    padding-right: 20px;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li {
+	padding: 10px 0px 6px;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li.resign {
+	padding: 12px 0px 15px;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li.resign input {
+	margin-right: 12px;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li > div {
+	float: left;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li div.radio {
+	width: 30px;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li div.amount {
+	width: 60px;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li div.reward-content {
+	width: 460px;
+	padding-top: 4px;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li.disabled label {
+    cursor: default;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li.disabled input[type="radio"] {
+    opacity: 0;
+}
+
+div.center-widget.booka-invest ul.invest-rewards li span.left{
+}
+
+div.center-widget.booka-invest ul.invest-rewards li label.resign, 
+div.center-widget.booka-invest ul.invest-rewards li label.amount {
+    padding: 10px 10px 10px 65px;
+    display: block;
+}
+
+div.center-widget.booka-invest label {
+    cursor: pointer;	
+}
+
+div.center-widget.booka-invest.footer {
+}
+
+div.center-widget.booka-invest.footer ul {
+    margin-left: 16px;
+}
+
+div.center-widget.booka-invest.footer ul li {
+    list-style-type: disc; 
+    margin-bottom: 10px;
+    line-height: 14px;
+}
+
+div.center-widget.spread-message {
+}
+
+div.center-widget.spread-message div.thanks {
+}
+
+div.center-widget.spread-message div.message {
+    margin: 20px 0 30px;
+    line-height: 30px;
+}
+
+div.center-widget.spread-message div.booka-spread ul.share {
+	height: 31px;
+    margin-top: 20px !important;
+}
+
+div.center-widget.spread-message div.booka-spread ul.share li.social-button.facebook {
+    margin-left: 30px;
+}
+
+div.center-widget.spread-message div.booka-spread li a {
+    padding-right: 46px;
+    padding-top: 6px;
+    padding-bottom: 16px;
+}
+
+div.center-widget.spread-message div.booka-spread li.social-button.twitter a {
+    background-position: right -56px !important;
+}
+
+div.center-widget.spread-message div.booka-spread li.social-button.facebook a {
+    background-position: right 0px !important;
+}
+
+div.center-widget.spread-message div.booka-embed {
+    margin-top: 30px;
+}
+
+div.center-widget.spread-message div.booka-embed p {
+    margin: 15px 0 10px;
+}
+
+div.center-widget.spread-message div.booka-embed div#widget-code textarea {
+    margin-top: -2px;
+    width: 245px;
+    height: 127px;
+    resize: none;
+}
+
+/* para pestañas idiomas en la edición */
+div#main div.board ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    font-size: 0;
+}
+
+div#main div.board ul li {
+    display: inline-block;
+    margin-right: 1px;
+}
+
+div#main div.board ul li a {
+    display: inline-block;
+    padding: .6em 2em .2em .6em;
+    text-decoration: none;
+}
+
+div#main div.board a {
+    padding: .3em .2em .2em .3em;
+    text-decoration: none;
+}
+
+/* selector contenidos idiomas */
+ul#lang-tabs  {
+    position: relative;
+    z-index: 9;
+    margin-bottom: -1px !important;
+}
+
+ul#lang-tabs li a.lang-tab {
+    text-transform: uppercase;
+    border: 1px solid grey;
+    border-bottom-color: black;
+    
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    -webkit-border-top-left-radius: 10px;
+    -webkit-border-top-right-radius: 10px;
+    -moz-border-radius-topleft: 10px;
+    -moz-border-radius-topright: 10px;
+    -o-border-top-left-radius: 10px;
+    -o-border-top-right-radius: 10px;
+}
+ul#lang-tabs li a.lang-tab.current {
+    font-weight: bold;
+    color: black;
+    border-color: black;
+    border-bottom-color: #F5F2E3;
+}
+
+div.lang-content {
+    position: relative;
+    display: none;
+    border: 1px solid black;
+    padding: 0 20px 10px;
+    z-index: 0;
+}

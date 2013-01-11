@@ -17,20 +17,33 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
+use Base\Library\Text,
+    Base\Core\ACL;
 
-
-use Goteo\Library\Text;
-
+$filters = $this['filters'];
 ?>
-
-<a href="/admin/footer/add" class="button red">Nueva entrada al pie</a>
+<a href="/admin/footer/add" class="button std-btn tight menu-btn">Añadir elemento</a>
 
 <div class="widget board">
-    <?php if (!empty($this['posts'])) : ?>
+    <form id="columnfilter-form" action="/admin/footer" method="get">
+        <label for="column-filter">Mostrar las elementos de:</label>
+        <select id="column-filter" name="column" onchange="document.getElementById('columnfilter-form').submit();">
+            <option value="">Todas</option>
+        <?php foreach ($this['columns'] as $columnId=>$columnName) : ?>
+            <option value="<?php echo $columnId; ?>"<?php if ($filters['column'] == $columnId) echo ' selected="selected"';?>><?php echo $columnName; ?></option>
+        <?php endforeach; ?>
+        </select>
+    </form>
+</div>
+
+<div class="widget board">
+    <?php if (!empty($this['footers'])) : ?>
     <table>
         <thead>
             <tr>
+                <td><!-- Edit --></td>
                 <th>Título</th> <!-- title -->
+                <th>Columna</th> <!-- column -->
                 <th>Posición</th> <!-- order -->
                 <td><!-- Move up --></td>
                 <td><!-- Move down --></td>
@@ -39,13 +52,15 @@ use Goteo\Library\Text;
         </thead>
 
         <tbody>
-            <?php foreach ($this['posts'] as $post) : ?>
+            <?php foreach ($this['footers'] as $item) : ?>
             <tr>
-                <td><?php echo $post->title; ?></td>
-                <td><?php echo $post->order; ?></td>
-                <td><a href="/admin/footer/up/<?php echo $post->id ?>/footer">[&uarr;]</a></td>
-                <td><a href="/admin/footer/down/<?php echo $post->id ?>/footer">[&darr;]</a></td>
-                <td><a href="/admin/footer/remove/<?php echo $post->id ?>/footer">[Quitar del footer]</a></td>
+                <td><?php echo Text::adminBtn($item->id, 'edit'); ?></td>
+                <td><?php echo $item->title; ?></td>
+                <td><?php echo $this['columns'][$item->column]; ?></td>
+                <td><?php echo $item->order; ?></td>
+                <td><?php echo Text::adminBtn($item->id, 'up'); ?></td>
+                <td><?php echo Text::adminBtn($item->id, 'down'); ?></td>
+                <td><?php echo Text::adminBtn($item->id, 'remove', '', 'Seguro que deseas eliminar este registro?'); ?></td>
             </tr>
             <?php endforeach; ?>
         </tbody>

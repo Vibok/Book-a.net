@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,60 +18,44 @@
  *
  */
 
-use Goteo\Core\View,
-    Goteo\Library\Text;
+use Base\Core\View,
+    Base\Library\Text;
 
-$bodyClass = 'user-login';
-// para que el prologue ponga el cï¿½digo js para botï¿½n facebook en el bannerside
-$fbCode = Text::widget(Text::get('social-account-facebook'), 'fb');
+$bodyClass = 'login';
+
 include 'view/prologue.html.php';
 include 'view/header.html.php';
 
-$error = $this['error'];
-$message = $this['message'];
 extract($_POST);
 ?>
-<div id="sub-header">
-	<div class="clearfix">
-		<div class="subhead-banner">
-			<h2 class="message"><?php echo Text::html('login-banner-header'); ?></h2>
-		</div>
-		<div class="mod-pojctopen"><?php echo Text::html('open-banner-header', $fbCode); ?></div>
-	</div>
-</div>
+
     <div id="main">
 
-        <div class="login">
-
-            <div>
-
-                <h2><?php echo Text::get('login-recover-header'); ?></h2>
-
-                <?php if (!empty($error)): ?>
-                <p class="error"><?php echo $error; ?></p>
-                <?php endif ?>
-                <?php if (!empty($message)): ?>
-                <p><?php echo $message; ?></p>
-                <?php endif ?>
-
-                <form action="/user/recover" method="post">
-                    <div class="username">
-                        <label><?php echo Text::get('login-recover-username-field'); ?>
-                        <input type="text" name="username" value="<?php echo $username?>" /></label>
-                    </div>
-
-                    <div class="email">
-                        <label><?php echo Text::get('login-recover-email-field'); ?>
-                        <input type="text" name="email" value="<?php echo $email?>" /></label>
-                    </div>
-
-                    <input type="submit" name="recover" value="<?php echo Text::get('login-recover-button'); ?>" />
-
-                </form>
-
-            </div>
+        <div id="sub-header" class="sh-info">
+            <h2><?php echo $this['text']; ?></h2>
+            <?php echo $this['content']; ?>
         </div>
 
+        <div class="three-cols">
+            <form action="/user/recover" method="post">
+                <div class="field-block">
+                    <label for="RegisterUsername"><?php echo Text::get('login-register-userid-field'); ?></label>
+                    <input type="text" id="RegisterUsername" name="username" value="<?php echo htmlspecialchars($username) ?>" />
+                </div>
+
+                <div class="field-block">
+                    <label for="RegisterEmail"><?php echo Text::get('login-register-email-field'); ?></label>
+                    <input type="text" id="RegisterEmail" name="email" value="<?php echo htmlspecialchars($email) ?>"/>
+                </div>
+
+                <br />
+                <button type="submit" name="recover" class="std-btn centered" value="recover"><?php echo Text::get('login-recover-button'); ?></button>
+
+            </form>
+        </div>
+        
     </div>
 
-<?php include 'view/footer.html.php' ?>
+<?php 
+include 'view/footer.html.php'; 
+include 'view/epilogue.html.php'; 

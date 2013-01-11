@@ -17,12 +17,12 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
+use Base\Library\Text,
+    Base\Core\ACL;
 
-use Goteo\Library\Text,
-    Goteo\Core\ACL;
-
-$translator = ACL::check('/translate') ? true : false;
 ?>
+<a href="/admin/pages/add" class="button std-btn tight menu-btn">Nueva P&aacute;gina</a>
+
 <div class="widget board">
     <?php if (!empty($this['pages'])) : ?>
     <table>
@@ -30,19 +30,21 @@ $translator = ACL::check('/translate') ? true : false;
             <tr>
                 <th><!-- Editar --></th>
                 <th>Página</th>
-                <th>Descripción</th>
-                <th><!-- Traducir --></th>
+                <th>Posición</th> <!-- order -->
+                <td><!-- Move up --></td>
+                <td><!-- Move down --></td>
+                <th><!-- Abrir --></th>
             </tr>
         </thead>
         <tbody>
             <?php foreach ($this['pages'] as $page) : ?>
             <tr>
-                <td><a href="/admin/pages/edit/<?php echo $page->id; ?>">[Editar]</a></td>
+                <td><?php echo Text::adminBtn($page->id, 'edit'); ?></td>
                 <td><?php echo $page->name; ?></td>
-                <td><?php echo $page->description; ?></td>
-                <?php if ($translator) : ?>
-                <td><a href="/translate/pages/edit/<?php echo $page->id; ?>" >[Traducir]</a></td>
-                <?php endif; ?>
+                <td><?php echo $page->order; ?></td>
+                <td><?php echo Text::adminBtn($page->id, 'up'); ?></td>
+                <td><?php echo Text::adminBtn($page->id, 'down'); ?></td>
+                <td><?php echo Text::adminBtn('', 'default', $page->url, '', '', 'Ver', true); ?></td>
             </tr>
             <?php endforeach; ?>
         </tbody>

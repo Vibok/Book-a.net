@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,27 +18,24 @@
  *
  */
 
-use Goteo\Library\Text,
-    Goteo\Core\View,
-    Goteo\Library\Page;
+use Base\Library\Text,
+    Base\Core\View,
+    Base\Library\Page;
 
-$page = Page::get('credits');
+$page = Page::get('error');
 
 include 'view/prologue.html.php';
 include 'view/header.html.php';
 ?>
 
     <div id="sub-header">
-        <div>
-            <h2><?php echo $error->getMessage() ?>!</h2>
-        </div>
+        <h2><?php echo $error->getMessage() ?>!</h2>
     </div>
 
     <div id="main">
-        <div class="widget">
-            <h3 class="title"><?php echo $page->name; ?></h3>
-            <?php echo $page->content; ?>
-        </div>
+        <h3 class="title"><?php echo $page->name; ?></h3>
+        <?php echo $page->content; ?>
+        <!-- <?php echo \trace($_SERVER); ?> -->
     </div>
 
 <?php include 'view/footer.html.php' ?>

@@ -18,8 +18,7 @@
  *
  */
 
-
-use Goteo\Library\Text;
+use Base\Library\Text;
 
 ?>
 <div class="widget">
@@ -38,20 +37,11 @@ use Goteo\Library\Text;
             </select>
         </p>
         <p>
-            <label for="invest-project">Proyecto:</label><br />
-            <select id="invest-project" name="project">
-                <option value="">Seleccionar el proyecto al que se aporta</option>
-            <?php foreach ($this['projects'] as $projectId=>$projectName) : ?>
-                <option value="<?php echo $projectId; ?>"><?php echo $projectName; ?></option>
-            <?php endforeach; ?>
-            </select>
-        </p>
-        <p>
-            <label for="invest-campaign">Campaña:</label><br />
-            <select id="invest-campaign" name="campaign">
-                <option value="">Seleccionar la campaña a la que se asigna este aporte</option>
-            <?php foreach ($this['campaigns'] as $campaignId=>$campaignName) : ?>
-                <option value="<?php echo $campaignId; ?>"><?php echo $campaignName; ?></option>
+            <label for="invest-booka">Booka:</label><br />
+            <select id="invest-booka" name="booka">
+                <option value="">Seleccionar el booka al que se aporta</option>
+            <?php foreach ($this['bookas'] as $bookId=>$bookName) : ?>
+                <option value="<?php echo $bookId; ?>"><?php echo $bookName; ?></option>
             <?php endforeach; ?>
             </select>
         </p>

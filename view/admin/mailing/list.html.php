@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -17,14 +17,13 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
+use Base\Library\Text;
 
-use Goteo\Library\Text;
-
-$filters = $_SESSION['mailing']['filters'];
+$filters = $this['filters'];
 
 ?>
 <div class="widget board">
-    <form id="filter-form" action="/admin/mailing/edit" method="post">
+    <form id="filter-form" action="/admin/mailing/edit" method="get">
 
         <table>
             <tr>
@@ -37,8 +36,8 @@ $filters = $_SESSION['mailing']['filters'];
                     </select>
                 </td>
                 <td>
-                    <label for="project-filter">De proyectos que el nombre contenga</label><br />
-                    <input id="project-filter" name="project" value="<?php echo $filters['project']?>" style="width:300px;" />
+                    <label for="booka-filter">De Bookas que el nombre contenga</label><br />
+                    <input id="booka-filter" name="booka" value="<?php echo $filters['booka']?>" style="width:300px;" />
                 </td>
                 <td>
                     <label for="status-filter">En estado</label><br />
@@ -60,15 +59,6 @@ $filters = $_SESSION['mailing']['filters'];
                 </td>
             </tr>
             <tr>
-                <td>
-                    <label for="interest-filter">Interesados en fin</label><br />
-                    <select id="interest-filter" name="interest">
-                        <option value="">Cualquiera</option>
-                    <?php foreach ($this['interests'] as $interestId=>$interestName) : ?>
-                        <option value="<?php echo $interestId; ?>"<?php if ($filters['interest'] == $interestId) echo ' selected="selected"';?>><?php echo $interestName; ?></option>
-                    <?php endforeach; ?>
-                    </select>
-                </td>
                 <td>
                     <label for="name-filter">Que el nombre o email contenga</label><br />
                     <input id="name-filter" name="name" value="<?php echo $filters['name']?>" style="width:300px;" />

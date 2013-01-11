@@ -18,8 +18,8 @@
  *
  */
 
-
-use Goteo\Library\Text;
+use Base\Library\Text,
+    Base\Library\Lang;
 
 ?>
 <script type="text/javascript">
@@ -35,7 +35,7 @@ jQuery(document).ready(function ($) {
 });
 </script>
 <div class="widget board">
-    <form method="post" action="/admin/faq/?filter=<?php echo $this['filter']; ?>">
+    <form method="post" action="/admin/faq">
 
         <input type="hidden" name="action" value="<?php echo $this['action']; ?>" />
         <input type="hidden" name="id" value="<?php echo $this['faq']->id; ?>" />
@@ -55,15 +55,27 @@ jQuery(document).ready(function ($) {
         <?php endif; ?>
         </p>
 
-        <p>
-            <label for="faq-title">Título:</label><br />
-            <input type="text" name="title" id="faq-title" value="<?php echo $this['faq']->title; ?>" />
-        </p>
+        <ul id="lang-tabs">
+            <?php foreach (Lang::$langs as $langId=>$langName) : ?>
+                <li><a href="<?php echo $langId ?>" class="lang-tab <?php if ($langId == 'es') echo 'current'; ?>"><?php echo $langName; ?></a>
+            <?php endforeach; ?>
+        </ul>
+        <?php foreach (Lang::$langs as $langId=>$langName) : 
+            $campo_titulo = 'title_'.$langId;
+            $campo_descripcion = 'description_'.$langId;
+            ?>
+            <div class="lang-content" id="lang-<?php echo $langId ?>-content" <?php if ($langId == 'es') echo ' style="display:block;"'; ?>>
+            <p>
+                <label for="faq-title_<?php echo $langId ?>">Título:</label><br />
+                <input type="text" name="title_<?php echo $langId ?>" id="faq-title_<?php echo $langId ?>" value="<?php echo $this['faq']->$campo_titulo ?>" style="width:420px;" />
+            </p>
 
-        <p>
-            <label for="faq-description">Descripción:</label><br />
-            <textarea name="description" id="faq-description" cols="60" rows="10"><?php echo $this['faq']->description; ?></textarea>
-        </p>
+            <p>
+                <label for="faq-description_<?php echo $langId ?>">Descripción:</label><br />
+                <textarea name="description_<?php echo $langId ?>" id="faq-description_<?php echo $langId ?>" cols="60" rows="10"><?php echo $this['faq']->$campo_descripcion; ?></textarea>
+            </p>
+            </div>
+        <?php endforeach; ?>
 
         <p>
             <label for="faq-order">Posición:</label><br />

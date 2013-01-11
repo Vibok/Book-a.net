@@ -17,20 +17,19 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
+use Base\Library\Text,
+    Base\Core\ACL;
 
-use Goteo\Library\Text,
-    Goteo\Core\ACL;
-
-$translator = ACL::check('/translate') ? true : false;
+$filters = $this['filters'];
 ?>
-<a href="/admin/faq/add/?filter=<?php echo $this['filter']; ?>" class="button red">Añadir pregunta</a>
+<a href="/admin/faq/add" class="button std-btn tight menu-btn">Añadir pregunta</a>
 
 <div class="widget board">
     <form id="sectionfilter-form" action="/admin/faq" method="get">
         <label for="section-filter">Mostrar las preguntas de:</label>
-        <select id="section-filter" name="filter" onchange="document.getElementById('sectionfilter-form').submit();">
+        <select id="section-filter" name="section" onchange="document.getElementById('sectionfilter-form').submit();">
         <?php foreach ($this['sections'] as $sectionId=>$sectionName) : ?>
-            <option value="<?php echo $sectionId; ?>"<?php if ($this['filter'] == $sectionId) echo ' selected="selected"';?>><?php echo $sectionName; ?></option>
+            <option value="<?php echo $sectionId; ?>"<?php if ($filters['section'] == $sectionId) echo ' selected="selected"';?>><?php echo $sectionName; ?></option>
         <?php endforeach; ?>
         </select>
     </form>
@@ -46,23 +45,19 @@ $translator = ACL::check('/translate') ? true : false;
                 <th>Posición</th> <!-- order -->
                 <td><!-- Move up --></td>
                 <td><!-- Move down --></td>
-                <td><!-- Traducir--></td>
                 <td><!-- Remove --></td>
             </tr>
         </thead>
 
         <tbody>
-            <?php foreach ($this['faqs'] as $faq) : ?>
+            <?php foreach ($this['faqs'] as $item) : ?>
             <tr>
-                <td><a href="/admin/faq/edit/<?php echo $faq->id; ?>/?filter=<?php echo $this['filter']; ?>">[Editar]</a></td>
-                <td><?php echo $faq->title; ?></td>
-                <td><?php echo $faq->order; ?></td>
-                <td><a href="/admin/faq/up/<?php echo $faq->id; ?>/?filter=<?php echo $this['filter']; ?>">[&uarr;]</a></td>
-                <td><a href="/admin/faq/down/<?php echo $faq->id; ?>/?filter=<?php echo $this['filter']; ?>">[&darr;]</a></td>
-                <?php if ($translator) : ?>
-                <td><a href="/translate/faq/edit/<?php echo $faq->id; ?>" >[Traducir]</a></td>
-                <?php endif; ?>
-                <td><a href="/admin/faq/remove/<?php echo $faq->id; ?>/?filter=<?php echo $this['filter']; ?>" onclick="return confirm('Seguro que deseas eliminar este registro?');">[Quitar]</a></td>
+                <td><?php echo Text::adminBtn($item->id, 'edit'); ?></td>
+                <td><?php echo $item->title; ?></td>
+                <td><?php echo $item->order; ?></td>
+                <td><?php echo Text::adminBtn($item->id, 'up'); ?></td>
+                <td><?php echo Text::adminBtn($item->id, 'down'); ?></td>
+                <td><?php echo Text::adminBtn($item->id, 'remove', '', 'Seguro que deseas eliminar este registro?'); ?></td>
             </tr>
             <?php endforeach; ?>
         </tbody>

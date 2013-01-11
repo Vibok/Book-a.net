@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  *
  */
 
-use Goteo\Core\View ?>
+<?php use Base\Core\View ?>
 
 <div class="superform<?php if (isset($this['class'])) echo ' '. htmlspecialchars($this['class']) ?>"<?php if (isset($this['id'])) echo 'id="'. htmlspecialchars($this['id']) . '"' ?>>
     
@@ -32,7 +32,10 @@ use Goteo\Core\View ?>
 
     </script>
     
-    <?php if (isset($this['title'])): ?>
+    <?php/*
+     * No usamos esto
+     * 
+    if (isset($this['title'])): ?>
     <h<?php echo $this['level'] ?>><?php echo htmlspecialchars($this['title']) ?></h<?php echo $this['level'] ?>>
     <?php endif ?>
     
@@ -40,7 +43,7 @@ use Goteo\Core\View ?>
     <div class="hint">                    
         <blockquote><?php echo $this['hint'] ?></blockquote>
     </div>
-    <?php endif ?>
+    <?php endif  */ ?>
     
     <?php echo new View('library/superform/view/elements.html.php', $this['elements']) ?>
     

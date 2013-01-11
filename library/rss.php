@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  *
  */
 
-namespace Goteo\Library {
+namespace Base\Library {
 
     require_once 'library/rss/FeedWriter.php';  // Libreria para creacion de rss
 
@@ -54,10 +54,9 @@ namespace Goteo\Library {
             }
 
             //channel
-//            $feed->set_image('Goteo.org', SITE_URL . '/images/logo.jpg');
             $feed->set_language('ES-ES'); // segun \LANG
             $feed->set_date(\date('Y-m-d\TH:i:s').'Z', DATE_UPDATED);
-            $feed->set_author(null, 'Goteo');
+            $feed->set_author(null, '');
             $feed->set_selfLink(SITE_URL . '/rss');
 
             foreach ($data['tags'] as $tagId => $tagName) {

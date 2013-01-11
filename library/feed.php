@@ -17,12 +17,14 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
+namespace Base\Library {
 
-namespace Goteo\Library {
-
-	use Goteo\Core\Model,
-        Goteo\Model\Blog\Post,
-        Goteo\Library\Text;
+	use Base\Core\Model,
+        Base\Model\Post,
+        Base\Model\Booka,
+        Base\Model\User,
+        Base\Model\Image,
+        Base\Library\Text;
 
 	/*
 	 * Clase para loguear eventos
@@ -34,17 +36,17 @@ namespace Goteo\Library {
             $title, // titulo entrada o nombre usuario
             $url = null, // enlace del titulo
             $image = null, // enlace del titulo
-            $scope = 'admin', // ambito del evento (public, admin)
-            $type =  'system', // tipo de evento  ($public_types , $admin_types)
+            $scope = 'admin', // ambito del evento (public, admin, private)
+            $type =  'system', // tipo de evento  ($public_types , $admin_types, $private_types)
             $timeago, // el hace tanto
             $date, // fecha y hora del evento
             $html, // contenido del evento en codigo html
             $unique = false, // si es un evento unique, no lo grabamos si ya hay un evento con esa url
+            $unique_issue = false, // si se encuentra con que esta duplicando el feed
             $text,  // id del texto dinamico
             $params,  // (array serializado en bd) parametros para el texto dinamico
-            $user, // usuario asociado al evento
-            $project, // proyecto asociado al evento
-            $node; // nodo asociado al evento
+            $target_type, // tipo de objetivo del evento (user, project, call, node, etc..) normalmente un libro semilla
+            $target_id; // id registro del objetivo (normalmente varchar(50))
 
         static public $admin_types = array(
             'all' => array(
@@ -78,25 +80,19 @@ namespace Goteo\Library {
         );
 
         static public $public_types = array(
-            'goteo' => array(
-                'label' => 'Goteo'
-            ),
-            'projects' => array(
-                'label' => 'Proyectos'
-            ),
             'community' => array(
-                'label' => 'Comunidad'
+                'label' => 'Novedades'
+            ),
+            'users' => array(
+                'label' => 'Intercambios'
             )
         );
 
         static public $color = array(
             'user' => 'blue',
-            'project' => 'light-blue',
-            'call' => 'light-blue',
+            'booka' => 'light-blue',
             'blog' => 'grey',
-            'news' => 'grey',
             'money' => 'violet',
-            'drop' => 'violet',
             'relevant' => 'red',
             'comment' => 'green',
             'update-comment' => 'grey',
@@ -107,17 +103,12 @@ namespace Goteo\Library {
 
         static public $page = array(
             'user' => '/user/profile/',
-            'project' => '/project/',
-            'call' => '/call/',
-            'drop' => SITE_URL,
+            'booka' => '/booka/',
             'blog' => '/blog/',
-            'news' => '/news/',
             'relevant' => '',
             'comment' => '/blog/',
-            'update-comment' => '/project/',
-            'message' => '/project/',
-            'system' => '/admin/',
-            'update' => '/project/'
+            'message' => '/booka/',
+            'system' => '/admin/'
         );
 
         /**
@@ -131,12 +122,38 @@ namespace Goteo\Library {
             $this->image = $image;
         }
 
+        /**
+         * Metodo que establece el elemento al que afecta el evento
+         *
+         * Sufridor del evento: tipo (tabla) & id registro
+         *
+         * @param $id string normalmente varchar(50)
+         * @param $type string (project, user, node, call, etc...)
+         */
+        public function setTarget ($id, $type = 'booka') {
+            $this->target_id = $id;
+            $this->target_type = $type;
+        }
+
+        /*
+         * Metodo que pone el texto dinámico
+         */
+        public function setText ($id) {
+            $this->text = $id;
+        }
+
+        /*
+         * Metodo que pone los parametros para el texto
+         */
+        public function setParams ($array) {
+            $this->params = serialize($array);
+        }
 
         public function doAdmin ($type = 'system') {
             $this->doEvent('admin', $type);
         }
 
-        public function doPublic ($type = 'goteo') {
+        public function doPublic ($type = 'community') {
             $this->doEvent('public', $type);
         }
 
@@ -149,11 +166,11 @@ namespace Goteo\Library {
         /**
 		 *  Metodo para sacar los eventos
          *
-         * @param string $type  tipo de evento (public: columnas goteo, proyectos, comunidad;  admin: categorias de filtro)
+         * @param string $type  tipo de evento (public: columnas comunidad;  admin: categorias de filtro)
          * @param string $scope ambito de eventos (public | admin)
          * @return array list of items
 		 */
-		public static function getAll($type = 'all', $scope = 'public') {
+		public static function getAll($type = 'all', $scope = 'public', $limit = '99') {
 
             $list = array();
 
@@ -171,14 +188,16 @@ namespace Goteo\Library {
                             feed.title as title,
                             feed.url as url,
                             feed.image as image,
-                            DATE_FORMAT(feed.datetime, '%H:%i %d|%m|%Y') as date,
                             feed.datetime as timer,
-                            feed.html as html
+                            feed.html as html,
+                            feed.target_type as target_type,
+                            feed.target_id as target_id
                         FROM feed
                         WHERE feed.scope = :scope $sqlType
-                        ORDER BY datetime DESC
-                        LIMIT 99
+                        ORDER BY feed.datetime DESC
+                        LIMIT $limit
                         ";
+                        //  , feed.text as text, feed.params as params
 
                 $query = Model::query($sql, $values);
                 foreach ($query->fetchAll(\PDO::FETCH_CLASS, __CLASS__) as $item) {
@@ -186,27 +205,178 @@ namespace Goteo\Library {
                     //hace tanto
                     $item->timeago = self::time_ago($item->timer);
 
-                    // si es la columan goteo, vamos a cambiar el html por el del post traducido
-                    if ($type == 'goteo') {
-                        // primero sacamos la id del post de la url
-                        $matches = array();
-                        
-                        \preg_match('(\d+)', $item->url, $matches);
-                        if (!empty($matches[0])) {
-                            //  luego hacemos get del post
-                            $post = Post::get($matches[0]);
-
-                            // y substituimos el $item->html por el $post->html
-                            $item->html = Text::recorta($post->text, 250);
+                    // para la miniatura rectangular de booka
+                    if ($item->target_type == 'booka') {
+                        $item->booka = Booka::getMini($item->target_id);
+                        if ($item->booka->image instanceof Image) {
+                            $item->booka->image = $item->booka->image->id;
+                        } else {
+                            // imagen por defecto para bookas
+                            $item->booka->image = 2;
                         }
                     }
-
 
                     $list[] = $item;
                 }
                 return $list;
             } catch (\PDOException $e) {
                 throw new Exception('FATAL ERROR SQL: ' . $e->getMessage() . "<br />$sql<br /><pre>" . print_r($values, 1) . "</pre>");
+            }
+		}
+
+        /**
+		 * Metodo para sacar novedades desde la base de datos y no desde el feed
+         * Saca un array con las dos colmnas
+         * 
+         * 
+         * @param string $type para tipos de eventos que queremos obtener
+         * @param int $limit para limitar la cantidad de registros que sacamos
+         * @return array list of items (como getAll)
+         * 
+         */
+		public static function getCommunity($limit = 99) {
+            $community = array();
+            $bookas    = array();
+            $posts     = array();
+
+            try {
+                // primero novedades
+                    // nuevo booka publicado, entrada en blog, comentario en blog
+                    // sql para sacar estos registros cada uno de su tabla y ordenar por fecha
+                $sql = "
+(	SELECT 
+		CONCAT('post') as type, 
+		post.id as item, 
+		post.id as id, 
+		user.name as author, 
+		user.id as user, 
+		CONCAT(post.date, ' ', DATE_FORMAT(feed.datetime, '%H:%i:%s')) as timer
+	FROM post
+	LEFT JOIN feed
+		ON feed.target_type = 'post'
+		AND feed.target_id = post.id
+		AND feed.scope = 'public'
+		AND feed.type = 'community'
+    INNER JOIN user
+        ON user.id = post.author
+	WHERE post.publish = 1
+	GROUP BY post.id
+	)
+UNION
+(	SELECT 
+		CONCAT('comment') as type, 
+		comment.post as item, 
+		comment.id as id, 
+		user.name as author, 
+		user.id as user, 
+		DATE_FORMAT(comment.date, '%Y-%m-%d %H:%i:%s') as timer
+	FROM comment
+    INNER JOIN post
+        ON post.id = comment.post
+        AND post.publish = 1
+    INNER JOIN user
+        ON user.id = comment.user
+	)
+UNION
+(	SELECT 
+		CONCAT('booka') as type, 
+		booka.id as item, 
+		booka.id as id, 
+		booka.author as author, 
+		booka.owner as user, 
+		CONCAT(booka.published, ' ', DATE_FORMAT(feed.datetime, '%H:%i:%s')) as timer
+	FROM booka 
+	LEFT JOIN feed
+		ON feed.target_type = 'booka'
+		AND feed.target_id = booka.id
+		AND feed.scope = 'public'
+		AND feed.type = 'community'
+	WHERE status = 3
+	GROUP BY booka.id
+)
+ORDER BY timer DESC
+LIMIT {$limit}
+";
+                
+                $query = Model::query($sql, $values);
+                foreach ($query->fetchAll(\PDO::FETCH_CLASS, __CLASS__) as $item) {
+
+                    // para cada registro, segun el tipo, le sacamos la imagen, el título, el enlace y el html (autor)
+                        // miro si tenemos el post/booka en el array
+                            // si lo tengo lo cojo de ahí
+                            // si no lo tengo, e hago un getMini, lo cojo y lo pongo
+                    switch ($item->type) {
+                        case 'booka':
+                            if (!isset($bookas[$item->item])) {
+                                $bookas[$item->item] = Booka::getMedium($item->item);
+                            }
+                            $item->url = '/booka/'.$item->item;
+                            if ($bookas[$item->item]->image instanceof Image) {
+                                $item->image = $bookas[$item->item]->image->id;
+                            } else {
+                                // imagen por defecto para un libro-semilla
+                                $item->image = 2;
+                            }
+                            $item->title = $bookas[$item->item]->clr_name;
+                            $item->html = Text::html('feed-new_booka', static::item('relevant', $item->author));
+                            
+                            break;
+                        case 'post':
+                            if (!isset($posts[$item->item])) {
+                                $posts[$item->item] = Post::getMini($item->item);
+                            }
+                            $item->url = '/blog/'.$item->item;
+                            if ($posts[$item->item]->image instanceof Image) {
+                                $item->image = $posts[$item->item]->image->id;
+                            } else {
+                                // imagen por defecto para un post
+                                $item->image = 3;
+                            }
+                            $item->title = $posts[$item->item]->clr_title;
+                            $item->html = Text::get('feed-new_post', 
+                                    static::item('blog', 'el blog', '/'),
+                                    static::item('user', $item->author, $item->user)
+                            );
+                            
+                            break;
+                        case 'comment':
+                            if (!isset($posts[$item->item])) {
+                                $posts[$item->item] = Post::getMini($item->item);
+                            }
+                            $item->url = '/blog/'.$item->item.'#comment'.$item->id;
+                            if ($posts[$item->item]->image instanceof Image) {
+                                $item->image = $posts[$item->item]->image->id;
+                            } else {
+                                // imagen por defecto para un post
+                                $item->image = 3;
+                            }
+                            $item->title = $posts[$item->item]->clr_title;
+                            $item->html = Text::get('feed-new_comment', 
+                                self::item('comment', Text::get('regular-comment'), $item->item.'#comment'.$item->id),
+                                self::item('user', $item->author, $item->user)
+                            );
+                            
+                            break;
+                    }
+                    
+                    //hace tanto
+                    $item->timeago = self::time_ago($item->timer);
+                    $community[] = $item;
+                }
+                
+                
+                // luego las acciones de usuario, directamente desde feed
+                //@TODO sacarlo igual que community para traducir
+                $users = self::getAll('users', 'public', $limit);
+                
+                $list = array(
+                    'community' => $community,
+                    'users' => $users
+                );
+                
+                return $list;
+            } catch (\PDOException $e) {
+                return array();
             }
 		}
 
@@ -225,24 +395,18 @@ namespace Goteo\Library {
 		public function add() {
 
             if (empty($this->html)) {
-                @mail('goteo_fail@doukeshi.org',
-                    'Evento feed sin html: ' . SITE_URL,
-                    "Feed sin contenido html<hr /><pre>" . print_r($this, 1) . "</pre>");
                 return false;
             }
 
-
             // primero, verificar si es unique, no duplicarlo
             if ($this->unique === true) {
-                $query = Model::query("SELECT id FROM feed WHERE url = :url AND scope = :scope AND type = :type",
+                Model::query("DELETE FROM feed WHERE scope = :scope AND type = :type AND target_type = :target_type AND target_id = :target_id",
                     array(
-                    ':url' => $this->url,
                     ':scope' => $this->scope,
-                    ':type' => $this->type
+                    ':type' => $this->type,
+                    ':target_type' => $this->target_type,
+                    ':target_id' => $this->target_id
                 ));
-                if ($query->fetchColumn(0) != false) {
-                    return true;
-                }
             }
 
   			try {
@@ -252,27 +416,25 @@ namespace Goteo\Library {
                     ':image' => $this->image,
                     ':scope' => $this->scope,
                     ':type' => $this->type,
-                    ':html' => $this->html
+                    ':html' => $this->html,
+                    ':text' => $this->text,
+                    ':params' => $this->params,
+                    ':target_type' => $this->target_type,
+                    ':target_id' => $this->target_id
                 );
 
 				$sql = "INSERT INTO feed
-                            (id, title, url, scope, type, html, image)
+                            (id, title, url, scope, type, html, text, params, image, target_type, target_id)
                         VALUES
-                            ('', :title, :url, :scope, :type, :html, :image)
+                            ('', :title, :url, :scope, :type, :html, :text, :params, :image, :target_type, :target_id)
                         ";
 				if (Model::query($sql, $values)) {
                     return true;
                 } else {
-                    @mail('goteo_fail@doukeshi.org',
-                        'Fallo al hacer evento feed: ' . SITE_URL,
-                        "Ha fallado Feed<br /> {$sql} con <pre>" . print_r($values, 1) . "</pre><hr /><pre>" . print_r($this, 1) . "</pre>");
                     return false;
                 }
                 
 			} catch(\PDOException $e) {
-                    @mail('goteo_fail@doukeshi.org',
-                        'PDO Exception evento feed: ' . SITE_URL,
-                        "Ha fallado Feed PDO Exception<br /> {$sql} con " . $e->getMessage() . "<hr /><pre>" . print_r($this, 1) . "</pre>");
                 return false;
 			}
 
@@ -322,7 +484,6 @@ namespace Goteo\Library {
             return empty($retval) ? $justnow : $retval;
         }
 
-
         /**
          *  Genera codigo html para enlace o texto dentro de feed
          *
@@ -331,10 +492,18 @@ namespace Goteo\Library {
 
             // si llega id es un enlace
             if (isset($id)) {
+                return '<a href="'.self::$page[$type].$id.'" class="ct1" target="_blank">'.$label.'</a>';
+            } else {
+                return '<span class="ct3">'.$label.'</span>';
+            }
+            
+            /*
+            if (isset($id)) {
                 return '<a href="'.self::$page[$type].$id.'" class="'.self::$color[$type].'" target="_blank">'.$label.'</a>';
             } else {
                 return '<span class="'.self::$color[$type].'">'.$label.'</span>';
             }
+             */
 
 
         }
@@ -349,42 +518,38 @@ namespace Goteo\Library {
 
             $pub_timeago = Text::get('feed-timeago-published', $item->timeago);
 
-            $content = '<div class="subitem">';
-
-           // si enlace -> título como texto del enlace
-           if (!empty($item->url)) {
-                // si imagen -> segun enlace:
-                if (!empty($item->image)) {
-
-                    if (substr($item->url, 0, 5) == '/user') {
-                        $content .= '<div class="content-avatar">
-                        <a href="'.$item->url.'" class="avatar"><img src="'.SRC_URL.'/image/'.$item->image.'/32/32/1" /></a>
-                        <a href="'.$item->url.'" class="username">'.$item->title.'</a>
-                        <span class="datepub">'.$pub_timeago.'</span>
-                        </div>';
-                    } else {
-                        $content .= '<div class="content-image">
-                        <a href="'.$item->url.'" class="image"><img src="'.SRC_URL.'/image/'.$item->image.'/90/60/1" /></a>
-                        <a href="'.$item->url.'" class="project light-blue">'.$item->title.'</a>
-                        <span class="datepub">'.$pub_timeago.'</span>
-                        </div>';
-                    }
-                } else {
-                    // solo titulo con enlace
-                    $content .= '<div class="content-title">
-                        <h5 class="light-blue"><a href="'.$item->url.'" class="project light-blue">'.$item->title.'</a></h5>
-                        <span class="datepub">'.$pub_timeago.'</span>
-                   </div>';
+            // si enlace -> título como texto del enlace
+            if (substr($item->url, 0, 5) == '/user') {
+                $content = '<div class="subitem user">';
+                
+                $content .= '<div class="image">
+                <a href="'.$item->url.'" class="avatar"><img src="'.SRC_URL.'/image/'.$item->image.'/60/60/1" /></a>';
+                
+                if ($item->target_type == 'booka') {
+                    $content .= '<a href="/booka/'.$item->target_id.'" class="booka"><img src="'.SRC_URL.'/image/'.$item->booka->image.'/37/60/1" /></a>';
                 }
-           } else {
-               // solo el timeago
-               $content .= '<span class="datepub">'.$pub_timeago.'</span>';
-           }
+                
+                $content .= '</div>';
+            } else {
+                $content = '<div class="subitem">';
+                
+                $content .= '<div class="image">
+                <a href="'.$item->url.'" class="image"><img src="'.SRC_URL.'/image/'.$item->image.'/75/60/1" /></a>
+                </div>';
+            }
+            
+            // y el contenido
+                $content .= '<div class="content">
+                    <a class="title ct1 fs-S bloque" href="'.$item->url.'">'.$item->title.'</a>
+                    <span class="ct2 wshadow fs-XS bloque">'.$pub_timeago.'</span>
+                ';
+            
+               // y lo que venga en el html
+               $content .= '<div class="content-pub">'.$item->html.'</div>';
 
-           // y lo que venga en el html
-           $content .= '<div class="content-pub">'.$item->html.'</div>';
-
-           $content .= '</div>';
+               $content .= '</div>';
+           $content .= '<br clear="both" />
+               </div>';
 
            return $content;
         }

@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,19 +18,19 @@
  *
  */
 
- $messages = $_SESSION['messages'];
+$messages = $_SESSION['messages'];
 unset($_SESSION['messages']);
 ?>
 <script type="text/javascript">
 	  jQuery(document).ready(function ($) { 
-		   $(".message-close").click(function (event) {
-					$("#message").fadeOut(2000);
+		   $(".advice-close").click(function (event) {
+					$("#advice").fadeOut(2000);
            });
 	  });
 </script>
-    <div id="message">
-    	<div id="message-content">
-        	<input type="button" class="message-close" >
+    <div id="advice">
+    	<div id="advice-content">
+        	<input type="button" class="advice-close" >
             <ul>
     <?php foreach($messages as $message): ?>
                 <li>

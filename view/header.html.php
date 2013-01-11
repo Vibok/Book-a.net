@@ -1,6 +1,6 @@
 <?php 
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,57 +18,91 @@
  *
  */
 
-use Goteo\Library\Text,
-    Goteo\Library\Lang;
+use Base\Core\ACL,
+    Base\Library\Text,
+    Base\Library\Lang;
+
+$is_admin = ACL::check('/admin/access');
 ?>
 
-<?php include 'view/header/lang.html.php' ?> 
+<?php if (!empty($_SESSION['user'])): ?>            
+    <ul id="top-mybooka">
+        <li><a href="/user/<?php echo $_SESSION['user']->id; ?>" class="top-mybooka-myname"><?php echo $_SESSION['user']->name; ?></a></li>
+        <li><a href="/dashboard"><?php echo Text::get('top-menu-myedit'); ?></a></li>
+        <?php if ($is_admin) : ?>
+        <li><a href="/admin"><?php echo Text::get('regular-admin_board'); ?></a></li>
+        <?php endif; ?>
+        <li><a href="/user/logout"><?php echo Text::get('regular-logout'); ?></a></li>
+    </ul>
+    <script type="text/javascript">
+    jQuery(document).ready(function ($) {
+         $("#login").hover(function(){
+           //desplegar idiomas
+           try{clearTimeout(TID_LANG)}catch(e){};
+           var pos = $(this).offset().left + $(this).width() - $("#top-mybooka").width();
+/*           alert('pos: ' + pos + '= left:' + $(this).offset().left + ' this-width: ' + $(this).width() + ' menu-width:' + $("#top-mybooka").width()); */
+/*           var pos = $(this).offset().left - $("#top-mybooka").width() + 20; */
+/*           var pos = $(this).offset().left; */
+           $("#top-mybooka").css({left:pos+'px'});
+           $("#top-mybooka").fadeIn();
+
+       },function() {
+           TID_LANG = setTimeout('$("#top-mybooka").hide()',100);
+        });
+        $('#top-mybooka').hover(function(){
+            try{clearTimeout(TID_LANG)}catch(e){};
+        },function() {
+           TID_LANG = setTimeout('$("#top-mybooka").hide()',100);
+        });
+
+
+    });
+    </script>                                  
+<?php endif; ?>            
 
 
 <div id="header">
-    <h1><?php echo Text::get('regular-main-header'); ?></h1>
     <div id="super-header">
-	   <?php include 'view/header/highlights.html.php' ?>
-    
-	   <div id="rightside" style="float:right;">
-           <div id="about">
-                <ul>
-                    <li><a href="/about"><?php echo Text::get('regular-header-about'); ?></a></li>
-                    <li><a href="/blog"><?php echo Text::get('regular-header-blog'); ?></a></li>
-                    <li><a href="/faq"><?php echo Text::get('regular-header-faq'); ?></a></li>  
-                    <li id="lang"><a href="#" ><?php echo Lang::get(LANG)->short ?></a></li>
-                    <script type="text/javascript">
-                    jQuery(document).ready(function ($) {
-						 $("#lang").hover(function(){
-						   //desplegar idiomas
-						   try{clearTimeout(TID_LANG)}catch(e){};
-						   var pos = $(this).offset().left;
-						   $('ul.lang').css({left:pos+'px'});
-						   $("ul.lang").fadeIn();
-					       $("#lang").css("background","#808285 url('/view/css/bolita.png') 4px 7px no-repeat");
-
-					   },function() {
-						   TID_LANG = setTimeout('$("ul.lang").hide()',100);
-						});
-						$('ul.lang').hover(function(){
-							try{clearTimeout(TID_LANG)}catch(e){};
-						},function() {
-						   TID_LANG = setTimeout('$("ul.lang").hide()',100);
-						   $("#lang").css("background","#59595C url('/view/css/bolita.png') 4px 7px no-repeat");
-						});
-						
-						
-					});
-					</script>                                  
-                </ul>
-            </div>
-            
-            
-		</div>
-     
-
+        <ul class="top-menu line">
+            <li><a href="/about"><?php echo Text::get('booka-about-header') ?></a></li>
+            <li><a href="/collection"><?php echo Text::get('booka-collections-header') ?></a></li>
+            <li><a href="/community"><?php echo Text::get('booka-community-header') ?></a></li>
+            <li><a href="/blog"><?php echo Text::get('booka-blog-header') ?></a></li>
+            <li><a href="/faq"><?php echo Text::get('booka-faq-header') ?></a></li>  
+            <li id="lang">
+                <?php foreach (Lang::$langs as $langId=>$langName) : 
+                    $curLang = ($langId == LANG) ? 'lang-current' : 'lang-other';
+                    ?>
+                    <a href="?lang=<?php echo $langId ?>" class="<?php echo $curLang; ?>"><?php echo $langName; ?></a>
+                <?php endforeach; ?>
+            </li>
+            <li id="login">
+            <?php if (!empty($_SESSION['user'])): ?>            
+                <a href="/dashboard" class="top-login"><?php echo Text::get('top-menu-mybooka'); ?></a>
+            <?php else: ?>            
+                <a href="/user/login" class="top-login"><?php echo Text::get('regular-login'); ?></a>
+            <?php endif; ?>
+            </li>
+        </ul>
     </div>
-
-    <?php include 'view/header/menu.html.php' ?>
-
 </div>
+
+<div id="header-logo">
+<?php if ($bodyClass == 'blog') : ?>
+    <h1><a href="<?php echo empty($home) ? '/' : $home ;?>" title="<?php echo Text::get('logo-booka'); ?>"><img src="/view/css/assets/logo_blog.jpg" alt="el blog de book-a" title="el blog de booka" /></a></h1>
+<?php else: ?>
+    <h1><a href="/" title="<?php echo Text::get('logo-booka'); ?>">book-a</a></h1>
+<?php endif; ?>
+
+    <div id="quick-search">
+        <form action="/search" method="post">
+            <label for="search_query" class="ct1 ft3 fs-S"><?php echo Text::get('regular-search'); ?> </label>
+            <input type="text" name="query" id="search_query" value="<?php echo $_SESSION['current_search'] ?>" class="fs-S"/>
+            <button type="submit" class="go-btn">&GT;</button>
+        </form>
+    </div>
+</div>
+
+<?php if(isset($_SESSION['messages'])) { include 'view/header/message.html.php'; } ?>
+
+

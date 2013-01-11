@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundaci�n Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,22 +18,38 @@
  *
  */
 
-use Goteo\Library\Text;
+use Base\Library\Text;
 
 ?>
 <p><strong><?php echo $this['template']->name; ?></strong>: <?php echo $this['template']->purpose; ?></p>
 
 <div class="widget board">
     <form method="post" action="/admin/templates/edit/<?php echo $this['template']->id; ?>">
-        <p>
-            <label for="tpltitle">Título:</label><br />
-            <input id="tpltitle" type="text" name="title" size="120" value="<?php echo $this['template']->title; ?>" />
-        </p>
+        <fieldset>
+            <legend>Espa&ntilde;ol</legend>
+            <p>
+                <label for="tpltitle_es">Asunto:</label><br />
+                <input id="tpltitle_es" type="text" name="title_es" size="120" value="<?php echo $this['template']->title_es; ?>" />
+            </p>
 
-        <p>
-            <label for="tpltext">Contenido:</label><br />
-            <textarea id="tpltext" name="text" cols="100" rows="20"><?php echo $this['template']->text; ?></textarea>
-        </p>
+            <p>
+                <label for="tpltext_es">Contenido:</label><br />
+                <textarea id="tpltext_es" name="text_es" cols="100" rows="20"><?php echo $this['template']->text_es; ?></textarea>
+            </p>
+        </fieldset>
+
+        <fieldset>
+            <legend>English</legend>
+            <p>
+                <label for="tpltitle_en">Asunto:</label><br />
+                <input id="tpltitle_en" type="text" name="title_en" size="120" value="<?php echo $this['template']->title_en; ?>" />
+            </p>
+
+            <p>
+                <label for="tpltext_en">Contenido:</label><br />
+                <textarea id="tpltext_en" name="text_en" cols="100" rows="20"><?php echo $this['template']->text_en; ?></textarea>
+            </p>
+        </fieldset>
 
         <input type="submit" name="save" value="Guardar" />
     </form>

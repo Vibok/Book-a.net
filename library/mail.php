@@ -18,20 +18,19 @@
  *
  */
 
+namespace Base\Library {
 
-namespace Goteo\Library {
-
-	use Goteo\Core\Model,
-        Goteo\Core\Exception,
-        Goteo\Core\View;
+	use Base\Core\Model,
+        Base\Core\Exception,
+        Base\Core\View;
 
     class Mail {
 
         public
-            $from = GOTEO_MAIL_FROM,
-            $fromName = GOTEO_MAIL_NAME,
-            $to = GOTEO_MAIL_FROM,
-            $toName = GOTEO_MAIL_NAME,
+            $from = CONF_MAIL_FROM,
+            $fromName = CONF_MAIL_NAME,
+            $to = CONF_MAIL_FROM,
+            $toName = CONF_MAIL_NAME,
             $subject,
             $content,
             $cc = false,
@@ -63,7 +62,7 @@ namespace Goteo\Library {
             $mail->WordWrap = 50;
 
             // Define el tipo de gestor de correo
-            switch(GOTEO_MAIL_TYPE) {
+            switch(CONF_MAIL_TYPE) {
                 default:
                 case "mail":
                     $mail->isMail(); // set mailer to use PHP mail() function.
@@ -76,12 +75,12 @@ namespace Goteo\Library {
                     break;
                 case "smtp":
                     $mail->IsSMTP(); // set mailer to use SMTP
-                    $mail->SMTPAuth = GOTEO_MAIL_SMTP_AUTH; // enable SMTP authentication
-                    $mail->SMTPSecure = GOTEO_MAIL_SMTP_SECURE; // sets the prefix to the servier
-                    $mail->Host = GOTEO_MAIL_SMTP_HOST; // specify main and backup server
-                    $mail->Port = GOTEO_MAIL_SMTP_PORT; // set the SMTP port
-                    $mail->Username = GOTEO_MAIL_SMTP_USERNAME;  // SMTP username
-                    $mail->Password = GOTEO_MAIL_SMTP_PASSWORD; // SMTP password
+                    $mail->SMTPAuth = CONF_MAIL_SMTP_AUTH; // enable SMTP authentication
+                    $mail->SMTPSecure = CONF_MAIL_SMTP_SECURE; // sets the prefix to the servier
+                    $mail->Host = CONF_MAIL_SMTP_HOST; // specify main and backup server
+                    $mail->Port = CONF_MAIL_SMTP_PORT; // set the SMTP port
+                    $mail->Username = CONF_MAIL_SMTP_USERNAME;  // SMTP username
+                    $mail->Password = CONF_MAIL_SMTP_PASSWORD; // SMTP password
                     break;
             }
             $this->mail = $mail;
@@ -141,12 +140,18 @@ namespace Goteo\Library {
                         $mail->Body    = $this->bodyHTML();
                         $mail->AltBody = $this->bodyText();
 
-                        // incrustar el logo de goteo
-                        $mail->AddEmbeddedImage(GOTEO_PATH . '/goteo_logo.png', 'logo', 'Goteo', 'base64', 'image/png');
+                        // incrustar el logo
+                        $mail->AddEmbeddedImage(CONF_PATH . '/booka_logo.png', 'logo', 'Booka', 'base64', 'image/png');
                     }
                     else {
                         $mail->IsHTML(false);
                         $mail->Body    = $this->bodyHTML(true);
+                    }
+
+                    // si estoy en entorno local ni lo intento, en vez de eso muestro el email en pantalla
+                    if (CONF_LOCAL === true) {
+                        if (CONF_DEBUG == true) die($mail->Body);
+                        return true;
                     }
 
                     // Envía el mensaje
@@ -186,23 +191,44 @@ namespace Goteo\Library {
             $viewData = array('content' => $this->content);
 
             // grabamos el contenido en la tabla de envios
-            $sql = "INSERT INTO mail (id, email, html, template) VALUES ('', :email, :html, :template)";
-            $values = array (
-                ':email' => $this->to,
-                ':html' => str_replace('cid:logo', SITE_URL.'/goteo_logo.png', $this->content),
-                ':template' => $this->template
-            );
-            $query = Model::query($sql, $values);
+            // especial para newsletter, solo grabamos un sinoves
+            if ($this->template == 33) {
+                if (!empty($_SESSION['NEWSLETTER_SENDID']) ) {
+                    $sendId = $_SESSION['NEWSLETTER_SENDID'];
+                } else {
+                    $sql = "INSERT INTO mail (id, email, html, template) VALUES ('', :email, :html, :template)";
+                    $values = array (
+                        ':email' => 'any',
+                        ':html' => $this->content,
+                        ':template' => $this->template
+                    );
+                    $query = Model::query($sql, $values);
 
-            $sendId = Model::insertId();
+                    $sendId = Model::insertId();
+                    $_SESSION['NEWSLETTER_SENDID'] = $sendId;
+                }
+                $the_mail = 'any';
+            } else {
+                $sql = "INSERT INTO mail (id, email, html, template) VALUES ('', :email, :html, :template)";
+                $values = array (
+                    ':email' => $this->to,
+                    ':html' => $this->content,
+                    ':template' => $this->template
+                );
+                $query = Model::query($sql, $values);
+
+                $sendId = Model::insertId();
+                $the_mail = $this->to;
+            }
 
             if (!empty($sendId)) {
                 // token para el sinoves
-                $token = md5(uniqid()) . '¬' . $this->to  . '¬' . $sendId;
+                $token = md5(uniqid()) . '¬' . $the_mail  . '¬' . $sendId;
                 $viewData['sinoves'] = \SITE_URL . '/mail/' . base64_encode($token) . '/?email=' . $this->to;
             } else {
                 $viewData['sinoves'] = \SITE_URL . '/contact';
             }
+            $_SESSION['MAILING_TOKEN'] = $viewData['sinoves'];
 
             $viewData['baja'] = \SITE_URL . '/user/leave/?email=' . $this->to;
 
@@ -211,7 +237,13 @@ namespace Goteo\Library {
 
                 ' . $viewData['sinoves'];
             } else {
-                return new View ('view/email/goteo.html.php', $viewData);
+                // para plantilla boletin
+                if ($this->template == 33) {
+                    $viewData['baja'] = \SITE_URL . '/user/leave/?unsuscribe=newsletter&email=' . $this->to;
+                    return new View (CONF_PATH.'/view/email/newsletter.html.php', $viewData);
+                } else {
+                    return new View ('view/email/default.html.php', $viewData);
+                }
             }
         }
 
@@ -254,7 +286,7 @@ namespace Goteo\Library {
          *
          * @param array $filters    user (nombre o email),  template
          */
-        public function getSended($filters = array()) {
+        public function getSended($filters = array(), $limit = 999) {
 
             $values = array();
             $sqlFilter = '';
@@ -277,12 +309,14 @@ namespace Goteo\Library {
                         user.name as user,
                         mail.email as email,
                         mail.template as template,
-                        DATE_FORMAT(mail.date, '%d/%m/%Y %H:%i') as date
+                        DATE_FORMAT(mail.date, '%d|%m|%Y %H:%i') as date
                     FROM mail
-                    LEFT JOIN user
+                    INNER JOIN user
                         ON user.email = mail.email
                     $sqlFilter
-                    ORDER BY mail.date DESC";
+                    ORDER BY mail.date DESC
+                    LIMIT {$limit}";
+
             $query = Model::query($sql, $values);
             return $query->fetchAll(\PDO::FETCH_OBJ);
             

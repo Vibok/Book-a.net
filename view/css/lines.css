@@ -1,0 +1,185 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* Estilos de lineas y bordes */
+div#header div#rightside ul li.top-login {
+    border-right: 1px solid black;
+    border-left: 1px solid black;
+}
+
+div#main.sided div.center > div.center-widget,
+div#main.sided div.side > div.side-widget,
+div.three-cols,
+div.widget,
+div#bookas > div.widget-booka, 
+div#sub-header,
+ul#top-mybooka,
+.roundc {
+    border-radius: 3px;
+    -o-border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+div#bookas > div.widget-booka div.widget-booka-content {
+    border-radius: 0 0 3px 3px;
+    -o-border-radius: 0 0 3px 3px;
+    -moz-border-radius: 0 0 3px 3px;
+    -webkit-border-radius: 0 0 3px 3px;
+} 
+
+
+div#bookas > div.widget-booka div.widget-booka-header,
+div#bookas > div.widget-booka h4.htitle,
+div.three-cols h3.htitle {
+    border-radius: 3px 3px 0 0;
+    -o-border-radius: 3px 3px 0 0;
+    -moz-border-radius: 3px 3px 0 0;
+    -webkit-border-radius: 3px 3px 0 0;
+}
+
+div.lcol {
+    border-radius: 3px 0 0 3px;
+    -o-border-radius: 3px 0 0 3px;
+    -moz-border-radius: 3px 0 0 3px;
+    -webkit-border-radius: 3px 0 0 3px;
+}
+
+
+div#main.sided div.center > div.center-widget,
+div#main.sided div.side > div.side-widget,
+div.three-cols,
+div.widget,
+div#bookas > div.widget-booka div.widget-booka-content, 
+div#sub-header,
+ul#top-mybooka,
+.box-shadow {
+    box-shadow: 2px 2px 1px rgba(237, 235, 220, 1);    
+    -o-box-shadow: 2px 2px 1px rgba(237, 235, 220, 1);    
+    -moz-box-shadow: 2px 2px 1px rgba(237, 235, 220, 1);
+    -webkit-box-shadow: 2px 2px 1px rgba(237, 235, 220, 1);
+}
+
+/* pastilla de titulo
+ * ya no es violeta
+h2.htitle {
+    box-shadow: 1px 1px 2px rgba(63, 62, 104, 1);    
+    -o-box-shadow: 1px 1px 2px rgba(63, 62, 104, 1);    
+    -moz-box-shadow: 1px 1px 2px rgba(63, 62, 104, 1);
+    -webkit-box-shadow: 1px 1px 2px rgba(63, 62, 104, 1);
+}
+ */
+
+h2.htitle,
+div.side-widget h3.htitle,
+div.three-cols h3.htitle {
+    box-shadow: 1px 1px 2px rgba(192, 190, 176, 1);    
+    -o-box-shadow: 1px 1px 2px rgba(192, 190, 176, 1);    
+    -moz-box-shadow: 1px 1px 2px rgba(192, 190, 176, 1);
+    -webkit-box-shadow: 1px 1px 2px rgba(192, 190, 176, 1);
+}
+
+/* abrazadera */ 
+.brace {
+    border-right: 1px solid #FDF6F0;
+    margin-left: -2px; /* tiene que ver para no desmontar todo*/
+    /*
+    box-shadow: -5px 0px 10px rgba(232, 229, 211, 0.64);
+    -o-box-shadow: -5px 0px 10px rgba(232, 229, 211, 0.64);    
+    -moz-box-shadow: -5px 0px 10px rgba(232, 229, 211, 0.64);
+    -webkit-box-shadow: -5px 0px 10px rgba(232, 229, 211, 0.64);
+    */
+}
+
+.hr,
+.underlined {
+    border-bottom: 1px solid #C9C6A3;
+    box-shadow: 0px 1px 0px rgba(230, 227, 205, 1);
+    -o-box-shadow: 0px 1px 0px rgba(230, 227, 205, 1);
+    -moz-box-shadow: 0px 1px 0px rgba(230, 227, 205, 1);
+    -webkit-box-shadow: 0px 1px 0px rgba(230, 227, 205, 1);
+}
+
+.hr {
+    height: 1px;
+    clear: both;
+}
+
+.hr hr {
+    display: none;
+}
+
+span.hr {
+    display: block;
+}
+
+/* separador vertical | */
+span.vr {
+    margin: 0 11px;
+}
+
+.bottom {
+    border-width: 0 0 1px 0 !important;
+    border-color: #C9C6A3;
+}
+
+.border {
+    border-width: 1px;
+}
+
+.closed {
+    border-style: solid;
+}
+
+.dashed {
+    border-style: dashed;
+}
+
+/* borde azul para inputs */
+.b1 {
+    border: 1px solid blue !important;
+}
+
+div#footer {  
+    border-top: 3px solid #D4D1BB;
+    box-shadow:         0px -2px 0px rgba(235, 237, 208, 1);    
+    -webkit-box-shadow: 0px -2px 0px rgba(235, 237, 208, 1);
+    -moz-box-shadow:    0px -2px 0px rgba(235, 237, 208, 1);
+}
+
+div#sub-footer ul li + li {
+    border-left: 1px solid #D9D7C4;
+}
+
+
+/* Cuadrito de coleccion */
+span.square {
+    width: 5px;
+    height: 5px;
+}
+
+/* recuadro feedback superform
+div.superform li.element > div.feedback > div {
+    box-shadow: 2px 3px 0 rgba(0,0,0,.2);    
+    -moz-box-shadow: 2px 3px 0 rgba(0,0,0,.2);    
+    -webkit-box-shadow: 2px 3px 0 rgba(0,0,0,.2);
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    border-radius: 7px;
+}
+ */

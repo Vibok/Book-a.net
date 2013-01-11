@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,15 +18,16 @@
  *
  */
 
+use Base\Library\Text,
+    Base\Library\Lang;
 
-use Goteo\Library\Text;
-
+$page = $this['page'];
 ?>
 <script type="text/javascript" src="/view/js/ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
-	// Lanza wysiwyg contenido
-	CKEDITOR.replace('richtext_content', {
+    <?php  foreach (Lang::$langs as $langId=>$langName) : ?>
+	CKEDITOR.replace('richtext_content_<?php echo $langId ?>', {
 		toolbar: 'Full',
 		toolbar_Full: [
 				['Source','-'],
@@ -39,24 +40,40 @@ $(document).ready(function(){
 				['Link','Unlink','Anchor'],
                 ['Image','Format','FontSize'],
 			  ],
-		skin: 'kama',
+		skin: 'v2',
 		language: 'es',
 		height: '300px',
-		width: '800px'
+		width: '730px'
 	});
+    
+    <?php endforeach;  ?>
 });
 </script>
 
 <div class="widget board">
-    <form method="post" action="/admin/pages/edit/<?php echo $this['page']->id; ?>">
+    <form method="post" action="/admin/pages/edit/<?php echo $page->id; ?>">
 
-        <label for="page-name">T&iacute;tulo:</label><br />
-        <input type="text" name="name" id="page-name" value="<?php echo $this['page']->name; ?>" />
-<br />
-        <label for="page-description">Cabecera:</label><br />
-        <textarea name="description" id="page-description" cols="60" rows="4"><?php echo $this['page']->description; ?></textarea>
-<br />
-        <textarea id="richtext_content" name="content" cols="100" rows="20"><?php echo $this['page']->content; ?></textarea>
+        <ul id="lang-tabs">
+            <?php foreach (Lang::$langs as $langId=>$langName) : ?>
+                <li><a href="<?php echo $langId ?>" class="lang-tab <?php if ($langId == 'es') echo 'current'; ?>"><?php echo $langName; ?></a>
+            <?php endforeach; ?>
+        </ul>
+        <?php foreach (Lang::$langs as $langId=>$langName) : 
+            $campo_text = 'text_'.$langId;
+            $campo_content = 'content_'.$langId;
+            ?>
+            <div class="lang-content" id="lang-<?php echo $langId ?>-content" <?php if ($langId == 'es') echo ' style="display:block;"'; ?>>
+                <p>
+                    <label for="page-text_<?php echo $langId ?>">Cabecera:</label><br />
+                    <textarea name="text_<?php echo $langId ?>" id="page-text_<?php echo $langId ?>" cols="60" rows="4"><?php echo $page->$campo_text; ?></textarea>
+                </p>
+                <p>
+                    <label for="richtext_content_<?php echo $langId ?>">Contenido:</label><br />
+                    <textarea id="richtext_content_<?php echo $langId ?>" name="content_<?php echo $langId ?>" cols="100" rows="20"><?php echo $page->$campo_content; ?></textarea>
+                </p>
+            </div>
+        <?php endforeach; ?>
+
         <input type="submit" name="save" value="Guardar" />
     </form>
 </div>

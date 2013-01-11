@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,27 +18,14 @@
  *
  */
 
-use Goteo\Library\Text,
-    Goteo\Core\ACL;
-
-$translator = ACL::check('/translate') ? true : false;
+use Base\Library\Text,
+    Base\Core\ACL;
 
 $filters = $this['filters'];
-
-// si hay filtro lo arrastramos
-if (!empty($filters)) {
-    $filter = "?";
-    foreach ($filters as $key => $fil) {
-        $filter .= "$key={$fil['value']}&";
-    }
-} else {
-    $filter = '';
-}
 
 $botones = array(
     'edit' => '[Editar]',
     'remove' => '[Quitar]',
-    'translate' => '[Traducir]',
     'up' => '[&uarr;]',
     'down' => '[&darr;]'
 );
@@ -49,7 +36,7 @@ $per = 100 / $cols;
 
 ?>
 <?php if (!empty($this['addbutton'])) : ?>
-<a href="<?php echo $this['url'] ?>/add" class="button red"><?php echo $this['addbutton'] ?></a>
+<a href="<?php echo $this['url'] ?>/add" class="button std-btn tight menu-btn"><?php echo $this['addbutton'] ?></a>
 <?php endif; ?>
 <!-- Filtro -->
 <?php if (!empty($filters)) : ?>
@@ -68,7 +55,7 @@ $per = 100 / $cols;
             <br />
             <label for="filter-<?php echo $id; ?>"><?php echo $fil['label']; ?></label>
             <input name="<?php echo $id; ?>" value="<?php echo (string) $fil['value']; ?>" />
-            <input type="submit" name="filter" value="Buscar">
+            <button type="submit" name="filter" class="std-btn tight menu-btn">Buscar</button>
         <?php endif; ?>
         <?php endforeach; ?>
     </form>
@@ -90,17 +77,12 @@ $per = 100 / $cols;
         <tbody>
         <?php foreach ($this['data'] as $item) : ?>
             <tr>
-            <?php foreach ($this['columns'] as $key=>$label) : ?>
-                <?php if ($key == 'translate') : ?>
-                    <td width="5%"><?php if ($translator) : ?><a href="/translate/<?php echo $this['model'].'/edit/'.$item->id; ?>" >[Traducir]</a><?php endif; ?>
-                    </td>
-                <?php elseif ($key == 'remove') : ?>
-                    <td width="5%"><a href="<?php echo $this['url']?>/remove/<?php echo (is_object($item)) ? $item->id : $item['id']; ?>" onclick="return confirm('Seguro que deseas eliminar este registro?');">[Quitar]</a></td>
-                <?php elseif (in_array($key, array('edit', 'up', 'down'))) :
-                    $id = (is_object($item)) ? $item->id : $item['id'];?>
-                    <td width="5%">
-                        <a title="Registro <?php echo $id; ?>" href="<?php echo "{$this['url']}/{$key}/{$id}/{$filter}"; ?>"><?php echo $botones[$key]; ?></a>
-                    </td>
+            <?php foreach ($this['columns'] as $key=>$label) : 
+                $id = (is_object($item)) ? $item->id : $item['id'];  ?>
+                <?php if ($key == 'remove') : ?>
+                    <td><?php echo Text::adminBtn($id, 'remove', '', 'Seguro que deseas eliminar este registro?'); ?></td>
+                <?php elseif (in_array($key, array('edit', 'up', 'down'))) : ?>
+                    <td><?php echo Text::adminBtn($id, $key); ?></td>
                 <?php elseif ($key == 'image') : ?>
                     <td width="<?php echo round($per)-5; ?>%"><?php if (!empty($item->$key)) : ?><img src="<?php echo SRC_URL ?>/image/<?php echo (is_object($item)) ? $item->$key : $item[$key]; ?>/110/110" alt="image" /><?php endif; ?></td>
                 <?php else : ?>

@@ -1,101 +1,131 @@
 <?php
-/*
- *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
- *	This file is part of Goteo.
- *
- *  Goteo is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Goteo is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public License
- *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
- *
- */
-
-define('GOTEO_PATH', __DIR__ . DIRECTORY_SEPARATOR);
+define('CONF_PATH', __DIR__ . DIRECTORY_SEPARATOR);
 if (function_exists('ini_set')) {
-    ini_set('include_path', GOTEO_PATH . PATH_SEPARATOR . '.');
+    ini_set('include_path', CONF_PATH . PATH_SEPARATOR . '.');
 } else {
-    throw new Exception("No puedo añadir la API GOTEO al include_path.");
+    throw new Exception("No puedo añadir la API base al include_path.");
 }
 
-// Nodo actual
-define('GOTEO_NODE', 'goteo');
+//Estoy en local
+define('CONF_LOCAL', false);
+define('CONF_DEBUG', false);
 
-define('PEAR', GOTEO_PATH . 'library' . '/' . 'pear' . '/');
+//Estoy en mantenimiento
+define('CONF_MAINTENANCE', false);
+define('CONF_MYIP', '');
+
+
+define('PEAR', CONF_PATH . 'library' . '/' . 'pear' . '/');
 if (function_exists('ini_set')) {
     ini_set('include_path', ini_get('include_path') . PATH_SEPARATOR . PEAR);
+    ini_set('include_path', ini_get('include_path') . PATH_SEPARATOR . CONF_PATH . 'library/paypal');
 } else {
     throw new Exception("No puedo añadir las librerías PEAR al include_path.");
 }
 
 if (!defined('PHPMAILER_CLASS')) {
-    define ('PHPMAILER_CLASS', GOTEO_PATH . 'library' . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'class.phpmailer.php');
+    define ('PHPMAILER_CLASS', CONF_PATH . 'library' . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'class.phpmailer.php');
 }
 if (!defined('PHPMAILER_LANGS')) {
-    define ('PHPMAILER_LANGS', GOTEO_PATH . 'library' . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'language' . DIRECTORY_SEPARATOR);
+    define ('PHPMAILER_LANGS', CONF_PATH . 'library' . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'language' . DIRECTORY_SEPARATOR);
 }
 if (!defined('PHPMAILER_SMTP')) {
-    define ('PHPMAILER_SMTP', GOTEO_PATH . 'library' . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'class.smtp.php');
+    define ('PHPMAILER_SMTP', CONF_PATH . 'library' . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'class.smtp.php');
 }
 if (!defined('PHPMAILER_POP3')) {
-    define ('PHPMAILER_POP3', GOTEO_PATH . 'library' . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'class.pop3.php');
+    define ('PHPMAILER_POP3', CONF_PATH . 'library' . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'class.pop3.php');
 }
 
 // Metadata
-define('GOTEO_META_TITLE', 'Goteo.org  Crowdfunding the commons');
-define('GOTEO_META_DESCRIPTION', 'Red social de financiacion colectiva');
-define('GOTEO_META_KEYWORDS', 'crowdfunding, procomun, commons, social, network, financiacion colectiva, cultural, creative commons, proyectos abiertos, open source, free software, licencias libres');
-define('GOTEO_META_AUTHOR', 'Onliners Web Development');
-define('GOTEO_META_COPYRIGHT', 'Fundación Fuentes Abiertas');
+define('CONF_META_TITLE', '');
+define('CONF_META_DESCRIPTION', '');
+define('CONF_META_KEYWORDS', '');
+define('CONF_META_AUTHOR', 'Onliners Web Development');
+define('CONF_META_COPYRIGHT', '');
 
 // Database
-define('GOTEO_DB_DRIVER', 'mysql');
-define('GOTEO_DB_HOST', 'localhost');
-define('GOTEO_DB_PORT', 3306);
-define('GOTEO_DB_CHARSET', 'UTF-8');
-define('GOTEO_DB_SCHEMA', 'goteo');
-define('GOTEO_DB_USERNAME', 'root');
-define('GOTEO_DB_PASSWORD', 'root');
+define('CONF_DB_DRIVER', 'mysql');
+define('CONF_DB_HOST', 'localhost');
+define('CONF_DB_PORT', 3306);
+define('CONF_DB_CHARSET', 'UTF-8');
+define('CONF_DB_SCHEMA', 'schema');
+define('CONF_DB_USERNAME', 'username');
+define('CONF_DB_PASSWORD', 'password');
 
 //Uploads i catxe
-define('GOTEO_DATA_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR);
+define('CONF_DATA_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR);
 
 // Mail
-define('GOTEO_MAIL_FROM', 'noreply@goteo.org');
-define('GOTEO_MAIL_NAME', 'Goteo.org');
-define('GOTEO_MAIL_TYPE', 'mail');
-define('GOTEO_MAIL_SMTP_AUTH', true);
-define('GOTEO_MAIL_SMTP_SECURE', 'ssl');
-define('GOTEO_MAIL_SMTP_HOST', '');
-define('GOTEO_MAIL_SMTP_PORT', 465);
-define('GOTEO_MAIL_SMTP_USERNAME', '');
-define('GOTEO_MAIL_SMTP_PASSWORD', '');
+define('CONF_MAIL_FROM', 'noreply@example.com');
+define('CONF_MAIL_NAME', 'Noreply');
+define('CONF_MAIL_TYPE', 'mail');
+define('CONF_MAIL_SMTP_AUTH', true);
+define('CONF_MAIL_SMTP_SECURE', 'ssl');
+define('CONF_MAIL_SMTP_HOST', '');
+define('CONF_MAIL_SMTP_PORT', 465);
+define('CONF_MAIL_SMTP_USERNAME', '');
+define('CONF_MAIL_SMTP_PASSWORD', '');
 
-define('GOTEO_MAIL', 'hola@goteo.org');
+define('CONF_MAIL', 'info@example.com');
+define('CONF_CONTACT_MAIL', 'contact@example.com');
 
 // Language
-define('GOTEO_DEFAULT_LANG', 'en');
-// name of the gettext .po file (used for admin only texts at the moment)
-define('GOTEO_GETTEXT_DOMAIN', 'messages');
-// gettext files are cached, to reload a new one requires to restart Apache which is stupid (and annoying while 
-//	developing) this setting tells the langueage code to bypass caching by using a clever file-renaming 
-// mechanism described in http://blog.ghost3k.net/articles/php/11/gettext-caching-in-php
-define('GOTEO_GETTEXT_BYPASS_CACHING', true);
+define('CONF_DEFAULT_LANG', 'es');
 
 // url
-define('SITE_URL', 'http://localhost:8888/');
-define('SRC_URL', 'http://localhost:8888/');
+define('SITE_URL', 'http://example.com');
+define('SRC_URL', 'http://example.com');
 
 // Cron params
 define('CRON_PARAM', '');
 define('CRON_VALUE', '');
 
-// Código liberado
-define('GOTEO_FREE', true);
+
+/****************************************************
+Paypal Config Values
+****************************************************/
+define('PAYPAL_REDIRECT_URL', 'https://www.sandbox.paypal.com/webscr&cmd=');
+define('PAYPAL_DEVELOPER_PORTAL', '');
+define('PAYPAL_DEVICE_ID', '');
+define('PAYPAL_APPLICATION_ID', '');
+define('PAYPAL_BUSINESS_ACCOUNT', '');
+define('PAYPAL_IP_ADDRESS', '127.0.0.1');
+define('PAYPAL_API_USER', '');
+define('PAYPAL_API_PASS', '');
+define('PAYPAL_API_SIGNATURE', '');
+define('PAYPAL_EP_API', 'https://api-3t.sandbox.paypal.com/2.0');
+define('PAYPAL_EP_IPN', 'https://ipnpb.sandbox.paypal.com/cgi-bin/webscr');
+define('PAYPAL_EP_PERM', 'https://svcs.sandbox.paypal.com/');
+/****************************************************
+TPV constants
+****************************************************/
+define('TPV_MERCHANT_CODE', '');
+define('TPV_REDIRECT_URL', '');
+define('TPV_ENCRYPT_KEY', '');
+define('TPV_WEBSERVICE_URL', '');
+
+
+/******************************************************
+OAUTH APP's Secrets
+*******************************************************/
+if (!defined('OAUTH_LIBS')) {
+    define ('OAUTH_LIBS', CONF_PATH . 'library' . DIRECTORY_SEPARATOR . 'oauth' . DIRECTORY_SEPARATOR . 'SocialAuth.php');
+}
+
+//Facebook
+define('OAUTH_FACEBOOK_ID', ''); //
+define('OAUTH_FACEBOOK_SECRET', ''); //
+
+
+//Twitter
+define('OAUTH_TWITTER_ID', ''); //
+define('OAUTH_TWITTER_SECRET', ''); //
+
+//Linkedin
+define('OAUTH_LINKEDIN_ID', ''); //
+define('OAUTH_LINKEDIN_SECRET', ''); //
+
+
+//Un secreto inventado cualquiera para encriptar los emails que sirven de secreto en openid
+define('OAUTH_OPENID_SECRET','');
+

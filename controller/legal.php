@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,16 +18,15 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+    use Base\Library\Page,
+        Base\Core\Redirection,
+        Base\Core\View,
+        Base\Library\Text,
+        Base\Library\Mail;
 
-    use Goteo\Library\Page,
-        Goteo\Core\Redirection,
-        Goteo\Core\View,
-        Goteo\Library\Text,
-        Goteo\Library\Mail;
-
-    class Legal extends \Goteo\Core\Controller {
+    class Legal extends \Base\Core\Controller {
         
         public function index ($id = null) {
 
@@ -40,8 +39,7 @@ namespace Goteo\Controller {
             return new View(
                 'view/about/sample.html.php',
                 array(
-                    'name' => $page->name,
-                    'description' => $page->description,
+                    'text' => $page->text,
                     'content' => $page->content
                 )
              );

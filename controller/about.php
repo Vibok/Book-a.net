@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,56 +18,57 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+    use Base\Library\Page,
+        Base\Core\Redirection,
+        Base\Core\View,
+        Base\Model,
+        Base\Library\Text,
+        Base\Library\Mail,
+        Base\Library\Template;
 
-    use Goteo\Library\Page,
-        Goteo\Core\Redirection,
-        Goteo\Core\View,
-        Goteo\Model,
-        Goteo\Library\Text,
-        Goteo\Library\Mail,
-        Goteo\Library\Template;
-
-    class About extends \Goteo\Core\Controller {
+    class About extends \Base\Core\Controller {
         
-        public function index ($id = null) {
+        public function index ($id = null, $section = null) {
 
-            if (empty($id)) {
-                $id = 'about';
+            // si llegan a la de mantenimiento sin estar en mantenimiento
+            if ($id == 'maintenance' && CONF_MAINTENANCE !== true) {
+                $id = 'credits';
 
-                $posts = Model\Info::getAll(true, \GOTEO_NODE);
+            } elseif (CONF_MAINTENANCE === true) {
 
-                return new View(
-                    'view/about/info.html.php',
-                    array(
-                        'posts' => $posts
-                    )
-                 );
+                return new View('view/about/maintenance.html.php', array());
+                
             }
 
+            // paginas especificas
             if ($id == 'faq' || $id == 'contact') {
                 throw new Redirection('/'.$id, Redirection::TEMPORARY);
             }
 
-            $page = Page::get($id);
+            // el tipo de contenido de la pagina about es diferente
+            if ($id == 'about' || empty($id)) {
+                // resto de casos
+                $page = Page::get('about');
 
-            if ($id == 'howto') {
                 return new View(
-                    'view/about/howto.html.php',
+                    'view/about/index.html.php',
                     array(
-                        'name' => $page->name,
-                        'description' => $page->description,
+                        'text' => $page->text,
                         'content' => $page->content
                     )
                  );
+
             }
+
+            // resto de casos
+            $page = Page::get($id);
 
             return new View(
                 'view/about/sample.html.php',
                 array(
-                    'name' => $page->name,
-                    'description' => $page->description,
+                    'text' => $page->text,
                     'content' => $page->content
                 )
              );

@@ -18,47 +18,28 @@
  *
  */
 
-
-use Goteo\Library\Text;
+use Base\Library\Text;
 
 $invest = $this['invest'];
-$project = $this['project'];
-$campaign = $this['campaign'];
+$booka = $this['booka'];
+$calls = $this['calls'];
+$droped = $this['droped'];
 $user = $this['user'];
+
+$rewards = $invest->rewards;
+array_walk($rewards, function (&$reward) { $reward = $reward->reward; });
 
 ?>
 <div class="widget">
     <p>
-        <strong>Proyecto:</strong> <?php echo $project->name ?> (<?php echo $this['status'][$project->status] ?>)
-        <strong>Usuario: </strong><?php echo $user->name ?> [<?php echo $user->email ?>]
-    </p>
-    <p>
-        <?php if ($project->status == 3 && ($invest->status < 1 || ($invest->method == 'tpv' && $invest->status < 2) ||($invest->method == 'cash' && $invest->status < 2))) : ?>
-        <a href="/admin/invests/cancel/<?php echo $invest->id ?>"
-            onclick="return confirm('¿Estás seguro de querer cancelar este aporte y su preapproval?');"
-            class="button red">Cancelar este aporte</a>&nbsp;&nbsp;&nbsp;
-        <?php endif; ?>
-
-        <?php if ($project->status == 3 && $invest->method == 'paypal' && $invest->status == 0) : ?>
-        <a href="/admin/invests/execute/<?php echo $invest->id ?>"
-            onclick="return confirm('¿Seguro que quieres ejecutar ahora? ¿No quieres esperar a la ejecución automática al final de la ronda? ?');"
-            class="button red">Ejecutar cargo ahora</a>
-        <?php endif; ?>
-
-        <?php if ($project->status == 3 && $invest->method != 'paypal' && $invest->status == 1) : ?>
-        <a href="/admin/invests/move/<?php echo $invest->id ?>" class="button weak">Reubicar este aporte</a>
-        <?php endif; ?>
+        <strong>Booka:</strong> <?php echo $booka->name ?> (<?php echo $this['status'][$booka->status] ?>)
+        <strong>Usuario: </strong><?php echo $user->name ?>
     </p>
 
     <h3>Detalles del aporte</h3>
     <dl>
         <dt>Cantidad aportada:</dt>
-        <dd><?php echo $invest->amount ?> &euro;
-            <?php
-                if (!empty($invest->campaign))
-                    echo 'Campaña: ' . $campaign->name;
-            ?>
-        </dd>
+        <dd><?php echo $invest->amount ?> &euro;</dd>
     </dl>
     
     <dl>
@@ -83,26 +64,17 @@ $user = $this['user'];
         <dt>Método de pago:</dt>
         <dd><?php echo $invest->method . '   '; ?>
             <?php
+                if (!empty($invest->campaign))
+                    echo '<br />Capital riego';
+
                 if (!empty($invest->anonymous))
                     echo '<br />Aporte anónimo';
 
                 if (!empty($invest->resign))
-                    echo "<br />Donativo de: {$invest->address->name} [{$invest->address->nif}]";
+                    echo "<br />Renuncia a recompensa";
 
                 if (!empty($invest->admin))
                     echo '<br />Manual generado por admin: '.$invest->admin;
-            ?>
-        </dd>
-    </dl>
-
-    <dl>
-        <dt>Códigos de seguimiento: <a href="/admin/accounts/details/<?php echo $invest->id ?>">Ir a la transacción</a></dt>
-        <dd><?php
-                if (!empty($invest->preapproval))
-                    echo 'Preapproval: '.$invest->preapproval . '   ';
-                
-                if (!empty($invest->payment)) 
-                    echo 'Cargo: '.$invest->payment . '   ';
             ?>
         </dd>
     </dl>
@@ -111,7 +83,7 @@ $user = $this['user'];
     <dl>
         <dt>Recompensas elegidas:</dt>
         <dd>
-            <?php echo implode(', ', $investData->rewards); ?>
+            <?php echo implode(', ', $rewards); ?>
         </dd>
     </dl>
     <?php endif; ?>
@@ -119,10 +91,15 @@ $user = $this['user'];
     <dl>
         <dt>Dirección:</dt>
         <dd>
-            <?php echo $invest->address->address; ?>,
-            <?php echo $invest->address->location; ?>,
-            <?php echo $invest->address->zipcode; ?>
-            <?php echo $invest->address->country; ?>
+            <?php echo Text::get('invest-address-name-field') .': '. $invest->address->name; ?><br />
+            <?php echo Text::get('invest-address-nif-field') .': '. $invest->address->nif; ?><br />
+            <?php echo Text::get('address-address-field') .': '. $invest->address->address; ?><br />
+            <?php echo Text::get('address-location-field') .': '. $invest->address->location; ?><br />
+            <?php echo Text::get('address-city-field') .': '. $invest->address->city; ?><br />
+            <?php echo Text::get('address-zipcode-field') .': '. $invest->address->zipcode; ?><br />
+            <?php echo Text::get('address-country-field') .': '. $invest->address->country; ?><br />
         </dd>
     </dl>
+
+    <a href="/admin/invests/edit/<?php echo $invest->id ?>">Modificar importe, recompensas o datos</a>
 </div>

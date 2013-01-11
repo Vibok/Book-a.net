@@ -18,57 +18,101 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+    use Base\Core\View,
+        Base\Library\Text,
+        Base\Library\Advice,
+        Base\Model\Post,
+        Base\Model\Collection,
+        Base\Model\Category,
+        Base\Core\Redirection;
 
-    use Goteo\Core\View,
-        Goteo\Library\Text,
-        Goteo\Library\Message,
-        Goteo\Model;
-
-    class Blog extends \Goteo\Core\Controller {
+    class Blog extends \Base\Core\Controller {
         
-        public function index ($post = null) {
+        public function index ($id = null) {
 
-            if (!empty($post)) {
-                $show = 'post';
-                // -- Mensaje azul molesto para usuarios no registrados
-                if (empty($_SESSION['user'])) {
-                    $_SESSION['jumpto'] = '/blog/' .  $post;
-                    Message::Info(Text::get('user-login-required'));
+            // categorias
+            $categories = Category::getAll(6);
+            
+            
+            $side = array(
+                'posts' => array(
+                    'title' => Text::get('blog-side-last_posts'),
+                    'items' => Post::getAll(null, true, 10)
+                ),
+                'comments' => array(
+                    'title' => Text::get('blog-side-last_comments'),
+                    'items' => Post\Comment::getLast(10)
+                ),
+                'collections' => array(
+                    'title' => Text::get('blog-side-collections'),
+                    'items' => Collection::getList(true, true)
+                ),
+                'tags' => array(
+                    'title' => Text::get('blog-side-tags'),
+                    'items' => Post\Tag::getList(10, true)
+                )
+            );
+            
+            if (!empty($id)) {
+                $post = Post::get($id);
+                $navi = Post::navi($id);
+
+                if (!$post instanceof Post || (!$post->publish && !isset($_GET['preview'])) || (isset($_GET['preview']) && $_GET['preview'] != $_SESSION['user']->id)) {
+                    Advice::Error('La entrada que buscas no está publicada');
+                    throw new Redirection('/blog');
                 }
-            } else {
-                $show = 'list';
+
+                // segun eso montamos la vista
+                return new View(
+                    'view/blog/index.html.php',
+                    array(
+                        'show' => 'post',
+                        'post' => $post,
+                        'navi' => $navi,
+                        'side' => $side,
+                        'home' => '/blog',
+                        'categories' => $categories
+                    )
+                 );
             }
 
-            // sacamos su blog
-            $blog = Model\Blog::get(\GOTEO_NODE, 'node');
-
+            $filters = array();
             if (isset($_GET['tag'])) {
-                $tag = Model\Blog\Post\Tag::get($_GET['tag']);
-                if (!empty($tag->id)) {
-                    $blog->posts = Model\Blog\Post::getList($blog->id, $tag->id);
+                $filters['tag'] = $_GET['tag'];
+            }
+
+            if (isset($_GET['collection'])) {
+                $filters['collection'] = $_GET['collection'];
+            }
+
+            $posts = Post::getAll($filters);
+
+            if (empty($posts)) {
+                if (!empty($filters)) {
+                    Advice::Error('No hay entradas de este tipo');
+                    throw new Redirection('/blog');
+                } else {
+                    throw new Redirection('/');
                 }
             }
-
-            if (isset($post) && !isset($blog->posts[$post]) && $_GET['preview'] != $_SESSION['user']->id) {
-                throw new \Goteo\Core\Redirection('/blog');
-            }
-
+            
             // segun eso montamos la vista
             return new View(
                 'view/blog/index.html.php',
                 array(
-                    'blog' => $blog,
-                    'show' => $show,
-                    'tag'  => $tag,
-                    'post' => $post,
-                    'owner' => \GOTEO_NODE
+                    'show' => 'list',
+                    'filters'  => $filters,
+                    'posts' => $posts,
+                    'side' => $side,
+                    'home' => '/',
+                    'categories' => $categories
                 )
              );
 
         }
-        
+
     }
     
 }

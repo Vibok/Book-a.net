@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,36 +18,20 @@
  *
  */
 
-
-use Goteo\Library\Page,
-    Goteo\Library\Text;
+use Base\Library\Page,
+    Base\Library\Text;
 
 $bodyClass = 'about';
-
-$page = Page::get('contact');
 
 include 'view/prologue.html.php';
 include 'view/header.html.php';
 ?>
-    <div id="sub-header">
-        <div>
-            <h2><?php echo $page->description; ?></h2>
-        </div>
-    </div>
 
     <div id="main">
 
-        <div class="widget">
-            <h3 class="title"><?php echo $page->name; ?></h3>
-            <?php echo $page->content; ?>
-
-            <?php if (!empty($this['errors']) || !empty($this['message'])) : ?>
-                <p>
-                    <?php echo implode(', ', $this['errors']); ?>
-                    <?php echo $this['message']; ?>
-                </p>
-            <?php endif; ?>
-
+        <div id="sub-header" class="sh-info">
+            <h2><?php echo $this['text']; ?></h2>
+            <?php echo $this['content']; ?>
         </div>
 
         <div class="widget contact-message">
@@ -55,22 +39,22 @@ include 'view/header.html.php';
             <h3 class="title"><?php echo Text::get('contact-send_message-header'); ?></h3>
 
             <form method="post" action="/contact">
-                <div class="field">
-                    <label for="email"><?php echo Text::get('contact-email-field'); ?></label><br />
+                <div class="field-block">   
+                    <label for="email"><?php echo Text::get('contact-email-field'); ?></label>
                     <input type="text" id="email" name="email" value="<?php echo $this['data']['email'] ?>"/>
                 </div>
 
-                <div class="field">
-                    <label for="subject"><?php echo Text::get('contact-subject-field'); ?></label><br />
+                <div class="field-block">
+                    <label for="subject"><?php echo Text::get('contact-subject-field'); ?></label>
                     <input type="text" id="subject" name="subject" value="<?php echo $this['data']['subject'] ?>"/>
                 </div>
 
-                <div class="field">
-                    <label for="message"><?php echo Text::get('contact-message-field'); ?></label><br />
+                <div class="field-block">
+                    <label for="message"><?php echo Text::get('contact-message-field'); ?></label>
                     <textarea id="message" name="message" cols="50" rows="5"><?php echo $this['data']['message'] ?></textarea>
                 </div>
 
-                <button class="green" type="submit" name="send"><?php echo Text::get('contact-send_message-button'); ?></button>
+                <button class="std-btn wide" type="submit" name="send"><?php echo Text::get('contact-send_message-button'); ?></button>
             </form>
 
         </div>

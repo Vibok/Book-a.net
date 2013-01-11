@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,12 +18,11 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+    use Base\Model;
 
-    use Goteo\Model;
-
-    class Ws extends \Goteo\Core\Controller {
+    class Ws extends \Base\Core\Controller {
         
         public function get_home_post($id) {
             $Post = Model\Post::get($id);
@@ -39,6 +38,14 @@ EOD;
 
         public function get_faq_order($section) {
             $next = Model\Faq::next($section);
+
+            header ('HTTP/1.1 200 Ok');
+            echo $next;
+            die;
+        }
+
+        public function get_footer_order($column) {
+            $next = Model\Footer::next($column);
 
             header ('HTTP/1.1 200 Ok');
             echo $next;
@@ -139,7 +146,7 @@ EOD;
 
 
         public function get_template_content($id) {
-            $Template = \Goteo\Library\Template::get($id);
+            $Template = \Base\Library\Template::get($id);
 
             header ('HTTP/1.1 200 Ok');
             echo $Template->title . '#$#$#' . $Template->text;

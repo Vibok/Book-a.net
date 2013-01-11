@@ -18,7 +18,7 @@
  *
  */
 
-use Goteo\Library\Text;
+use Base\Library\Text;
 
 $user = $this['user'];
 

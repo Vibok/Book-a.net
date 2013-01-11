@@ -18,29 +18,42 @@
  *
  */
 
-use Goteo\Library\Text;
+use Base\Library\Lang;
 
 ?>
+<p>Estas editando el texto "<?php echo $this['text']->id; ?>"</p>
 <div class="widget board">
-    <!-- superform -->
-    <form action="<?php echo $this['form']['action']; ?>" method="post" enctype="multipart/form-data">
-        <dl>
-            <?php foreach ($this['form']['fields'] as $Id=>$field) : ?>
-                <dt><label for="<?php echo $Id; ?>"><?php echo $field['label']; ?></label></dt>
-                <dd><?php switch ($field['type']) {
-                    case 'text': ?>
-                        <input type="text" id="<?php echo $Id; ?>" name="<?php echo $field['name']; ?>" <?php echo $field['properties']; ?> value="<?php $name = $field['name']; echo $this['data']->$name; ?>" />
-                    <?php break;
-                    case 'hidden': ?>
-                        <input type="hidden" name="<?php echo $field['name']; ?>" <?php echo $field['properties']; ?> value="<?php $name = $field['name']; echo $this['data']->$name; ?>" />
-                    <?php break;
-                    case 'textarea': ?>
-                        <textarea id="<?php echo $Id; ?>" name="<?php echo $field['name']; ?>" <?php echo $field['properties']; ?>><?php $name = $field['name']; echo $this['data']->$name; ?></textarea>
-                    <?php break;
-                } ?></dd>
+    <form action="/admin/texts" method="post" >
+        <input type="hidden" name="action" value="<?php echo $this['action']; ?>" />
+        <input type="hidden" name="id" value="<?php echo $this['text']->id; ?>" />
 
+        <ul id="lang-tabs">
+            <?php foreach (Lang::$langs as $langId=>$langName) : ?>
+                <li><a href="<?php echo $langId ?>" class="lang-tab <?php if ($langId == 'es') echo 'current'; ?>"><?php echo $langName; ?></a>
             <?php endforeach; ?>
-        </dl>
-        <input type="submit" name="<?php echo $this['form']['submit']['name']; ?>" value="<?php echo $this['form']['submit']['label']; ?>" />
+        </ul>
+        <?php foreach (Lang::$langs as $langId=>$langName) : 
+            $campo = 'text_'.$langId;
+            ?>
+            <div class="lang-content" id="lang-<?php echo $langId ?>-content" <?php if ($langId == 'es') echo ' style="display:block;"'; ?>>
+            <p>
+                <label for="text_<?php echo $langId ?>">Texto:</label><br />
+                <input type="text" name="text_<?php echo $langId ?>" id="text_<?php echo $langId ?>" value="<?php echo $this['text']->$campo ?>" style="width:420px;" />
+            </p>
+            </div>
+        <?php endforeach; ?>
+        
+<br />
+
+
+        <label for="text-group">Agrupación (mejor no tocar):</label><br />
+        <select id="text-group" name="group">
+            <option value="" disabled>Elige una agrupacion:</option>
+            <?php foreach ($this['groups'] as $gId=>$gName) : ?>
+            <option value="<?php echo $gId; ?>"<?php if ($gId == $this['text']->group) echo ' selected="selected"'; ?>><?php echo $gName; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <input type="submit" name="save" value="Guardar" />
     </form>
 </div>

@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,41 +18,46 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+    use Base\Core\View,
+        Base\Model;
 
-    use Goteo\Library\Page,
-        Goteo\Core\View,
-        Goteo\Model;
+    class Faq extends \Base\Core\Controller {
 
-    class Faq extends \Goteo\Core\Controller {
+        public function index ($current = 'main') {
 
-        public function index () {
-
-            $page = Page::get('faq');
             $faqs = array();
 
             $sections = Model\Faq::sections();
-            $colors   = Model\Faq::colors();
 
             foreach ($sections as $id=>$name) {
                 $qs = Model\Faq::getAll($id);
                 
-                if (empty($qs))
+                if (empty($qs)) {
+                    if ($id == $current && $current != 'main') {
+                        throw new \Base\Core\Redirection('/faq');
+                    }
+                    unset($sections[$id]);
                     continue;
+                }
 
                 $faqs[$id] = $qs;
                 foreach ($faqs[$id] as &$question) {
                     $question->description = nl2br(str_replace(array('%SITE_URL%'), array(SITE_URL), $question->description));
+                    if (isset($show) && $show == $question->id) {
+                        $current = $id;
+                    }
                 }
             }
 
             return new View(
-                'view/faq.html.php',
+                'view/faq/index.html.php',
                 array(
                     'faqs'     => $faqs,
+                    'current'  => $current,
                     'sections' => $sections,
-                    'colors'   => $colors
+                    'show'     => $show
                 )
              );
 

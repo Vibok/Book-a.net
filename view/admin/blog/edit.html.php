@@ -18,61 +18,84 @@
  *
  */
 
-
-use Goteo\Library\Text,
-    Goteo\Model,
-    Goteo\Core\Redirection,
-    Goteo\Library\SuperForm;
-
-define('ADMIN_NOAUTOSAVE', true);
+use Base\Library\Text,
+    Base\Model,
+    Base\Core\Redirection,
+    Base\Library\Lang,
+    Base\Library\NormalForm;
 
 $post = $this['post'];
+$bookas = $this['bookas'];
+$status = $this['status'];
 
-if (!$post instanceof Model\Blog\Post) {
+if (!$post instanceof Model\Post) {
     throw new Redirection('/admin/blog');
 }
 
-// Superform
-    $tags = array();
+$tags = array();
 
-    foreach ($this['tags'] as $value => $label) {
-        $tags[] =  array(
-            'value'     => $value,
-            'label'     => $label,
-            'checked'   => isset($post->tags[$value])
-            );
-    }
+foreach ($this['tags'] as $value => $label) {
+    $tags[] =  array(
+        'value'     => $value,
+        'label'     => $label,
+        'checked'   => isset($post->tags[$value])
+        );
+}
 
-    $allow = array(
-        array(
-            'value'     => 1,
-            'label'     => 'Sí'
-            ),
-        array(
-            'value'     => 0,
-            'label'     => 'No'
-            )
+$allow = array(
+    array(
+        'value'     => 1,
+        'label'     => 'Sí'
+        ),
+    array(
+        'value'     => 0,
+        'label'     => 'No'
+        )
+);
+
+
+$images = array();
+foreach ($post->gallery as $image) {
+    $images[] = array(
+        'type'  => 'html',
+        'class' => 'gallery-image',
+        'html'  => is_object($image) ?
+                   $image . '<img src="'.SRC_URL.'/image/'.$image->id.'/128/128" alt="Imagen" /><button class="image-remove weak" type="submit" name="gallery-'.$image->id.'-remove" title="Quitar imagen" value="remove"></button>' :
+                   ''
     );
 
+}
 
-    $images = array();
-    foreach ($post->gallery as $image) {
-        $images[] = array(
-            'type'  => 'html',
-            'class' => 'inline gallery-image',
-            'html'  => is_object($image) ?
-                       $image . '<img src="'.SRC_URL.'/image/'.$image->id.'/128/128" alt="Imagen" /><button class="image-remove weak" type="submit" name="gallery-'.$image->id.'-remove" title="Quitar imagen" value="remove"></button>' :
-                       ''
-        );
+$booka_select = '<select name="booka">';
+$booka_select .= '<option value="">--</option>';
+foreach ($bookas as $booka) {
+    $selected = ($post->booka == $booka->id) ? ' selected="selected"' : '';
+    $booka_select .= '<option value="'.$booka->id.'"'.$selected.'>'.$booka->name.' ('.$status[$booka->status].')</option>';
+}
+$booka_select .= '</select>';
 
-    }
+// el publicar esta oculto para los colaboradores
+if (isset($_SESSION['user']->roles['vip-blog'])) {
+    $publish = array(
+        'type'      => 'hidden',
+        'value'     => (int) $post->publish
+    );
+} else {
+    $publish = array(
+        'title'     => 'Publicado',
+        'type'      => 'slider',
+        'options'   => $allow,
+        'class'     => 'currently cols_4',
+        'value'     => (int) $post->publish
+    );
+}
 
 ?>
 <script type="text/javascript" src="/view/js/ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
-	// Lanza wysiwyg contenido
-	CKEDITOR.replace('text_editor', {
+	// Lanza wysiwyg texto español
+	CKEDITOR.replace('text_es_editor', {
 		toolbar: 'Full',
 		toolbar_Full: [
 				['Source','-'],
@@ -85,30 +108,119 @@ $(document).ready(function(){
 				['Link','Unlink','Anchor'],
                 ['Image','Format','FontSize'],
 			  ],
-		skin: 'kama',
+		skin: 'v2',
 		language: 'es',
 		height: '300px',
 		width: '675px'
 	});
+
+	CKEDITOR.replace('text_en_editor', {
+		toolbar: 'Full',
+		toolbar_Full: [
+				['Source','-'],
+				['Cut','Copy','Paste','PasteText','PasteFromWord','-','Print', 'SpellChecker', 'Scayt'],
+				['Undo','Redo','-','Find','Replace','-','SelectAll','RemoveFormat'],
+				'/',
+				['Bold','Italic','Underline','Strike'],
+				['NumberedList','BulletedList','-','Outdent','Indent','Blockquote'],
+				['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+				['Link','Unlink','Anchor'],
+                ['Image','Format','FontSize'],
+			  ],
+		skin: 'v2',
+		language: 'es',
+		height: '300px',
+		width: '675px'
+	});
+    
 });
 </script>
 
-<form method="post" action="/admin/blog/<?php echo $this['action']; ?>/<?php echo $post->id; ?>" class="project" enctype="multipart/form-data">
+<a href="/admin/blog" class="button std-btn tight menu-btn tipsy" title="Volver a la lista sin guardar los cambios">Volver</a>
 
-    <?php echo new SuperForm(array(
+<div class="widget board">
+    <form method="post" action="/admin/blog/<?php echo $this['action']; ?>/<?php echo $post->id; ?>" enctype="multipart/form-data">
+
+        
+    <ul id="lang-tabs">
+        <?php foreach (Lang::$langs as $langId=>$langName) : ?>
+            <li><a href="<?php echo $langId ?>" class="lang-tab <?php if ($langId == 'es') echo 'current'; ?>"><?php echo $langName; ?></a>
+        <?php endforeach; ?>
+    </ul>
+    <?php foreach (Lang::$langs as $langId=>$langName) : 
+        $campo_titulo = 'title_'.$langId;
+        $campo_texto = 'text_'.$langId;
+        $campo_caption = 'legend_'.$langId;
+        $campo_video = 'media_'.$langId;
+        ?>
+        <div class="lang-content" id="lang-<?php echo $langId ?>-content" <?php if ($langId == 'es') echo ' style="display:block;"'; ?>>
+    <?php
+    // campos por idioma
+    echo new NormalForm(array(
 
         'action'        => '',
         'level'         => 3,
         'method'        => 'post',
         'title'         => '',
-        'hint'          => Text::get('guide-blog-posting'),
-        'class'         => 'aqua',
+        'elements'      => array(
+            $campo_titulo => array(
+                'type'      => 'textbox',
+                'required'  => true,
+                'size'      => 100,
+                'title'     => 'Título',
+                'value'     => $post->$campo_titulo,
+            ),
+            $campo_texto => array(
+                'type'      => 'textarea',
+                'required'  => true,
+                'cols'      => 40,
+                'rows'      => 4,
+                'title'     => 'Texto',
+                'value'     => $post->$campo_texto
+            ),
+            $campo_caption => array(
+                'type'      => 'textbox',
+                'title'     => 'Créditos de las imágenes',
+                'value'     => $post->$campo_caption,
+            )
+            /*
+            ,
+            $campo_video => array(
+                'type'      => 'textbox',
+                'title'     => 'Vídeo',
+                'class'     => 'media',
+                'value'     => (string) $post->$campo_video,
+                'children'  => array(
+                    'media-preview' => array(
+                        'title' => 'Vista previa',
+                        'class' => 'media-preview',
+                        'type'  => 'html',
+                        'html'  => !empty($post->$campo_video) ? $post->$campo_video->getEmbedCode() : ''
+                    )
+                )
+            ),
+             */
+        )
+
+    ));
+    ?>
+    </div>
+<?php endforeach; ?>
+
+    <?php 
+    // campos generales
+    echo new NormalForm(array(
+
+        'action'        => '',
+        'level'         => 3,
+        'method'        => 'post',
+        'title'         => '',
         'footer'        => array(
-            'view-step-preview' => array(
+            'button' => array(
                 'type'  => 'submit',
                 'name'  => 'save-post',
-                'label' => Text::get('regular-save'),
-                'class' => 'next'
+                'label' => 'Guardar',
+                'class' => 'std-btn wide'
             )
         ),
         'elements'      => array(
@@ -116,88 +228,76 @@ $(document).ready(function(){
                 'type' => 'hidden',
                 'value' => $post->id
             ),
-            'blog' => array (
+            'author' => array (
                 'type' => 'hidden',
-                'value' => $post->blog
+                'value' => $post->author
             ),
-            'title' => array(
-                'type'      => 'textbox',
-                'required'  => true,
-                'size'      => 20,
-                'title'     => 'Título',
-                'hint'      => Text::get('tooltip-updates-title'),
-                'errors'    => !empty($errors['title']) ? array($errors['title']) : array(),
-                'value'     => $post->title,
+            'home' => array (
+                'type' => 'hidden',
+                'value' => $post->home
             ),
-            'text' => array(
-                'type'      => 'textarea',
-                'required'  => true,
-                'cols'      => 40,
-                'rows'      => 4,
-                'title'     => 'Texto de la entrada',
-                'hint'      => Text::get('tooltip-updates-text'),
-                'errors'    => !empty($errors['text']) ? array($errors['text']) : array(),
-                'value'     => $post->text
+            'footer' => array (
+                'type' => 'hidden',
+                'value' => $post->footer
+            ),
+            'top' => array (
+                'type' => 'hidden',
+                'value' => $post->top
             ),
             'image' => array(
                 'title'     => 'Imagen',
                 'type'      => 'group',
-                'hint'      => Text::get('tooltip-updates-image'),
-                'errors'    => !empty($errors['image']) ? array($errors['image']) : array(),
                 'class'     => 'image',
                 'children'  => array(
                     'image_upload'    => array(
                         'type'  => 'file',
-                        'class' => 'inline image_upload',
-                        'label' => Text::get('form-image_upload-button'),
-                        'hint'  => Text::get('tooltip-updates-image_upload'),
+                        'class' => 'image_upload',
+                        'label' => 'Añadir'
                     )
                 )
             ),
 
             'gallery' => array(
                 'type'  => 'group',
-                'title' => Text::get('overview-field-image_gallery'),
-                'class' => 'inline',
+                'class' => '',
                 'children'  => $images
             ),
 
-            'media' => array(
-                'type'      => 'textbox',
-                'title'     => 'Vídeo',
-                'class'     => 'media',
-                'hint'      => Text::get('tooltip-updates-media'),
-                'errors'    => !empty($errors['media']) ? array($errors['media']) : array(),
-                'value'     => (string) $post->media,
-                'children'  => array(
-                    'media-preview' => array(
-                        'title' => 'Vista previa',
-                        'class' => 'media-preview inline',
-                        'type'  => 'html',
-                        'html'  => !empty($post->media) ? $post->media->getEmbedCode() : ''
-                    )
-                )
-            ),
-            'legend' => array(
-                'type'      => 'textarea',
-                'title'     => Text::get('regular-media_legend'),
-                'value'     => $post->legend,
-            ),
-            
             'tags' => array(
                 'type'      => 'checkboxes',
                 'name'      => 'tags[]',
                 'title'     => 'Tags',
-                'options'   => $tags,
-                'hint'      => Text::get('tooltip-updates-tags'),
-                'errors'    => !empty($errors['tags']) ? array($errors['tags']) : array(),
+                'class'     => 'currently cols_3',
+                'options'   => $tags
             ),
+
+            'new-tag' => array(
+                'type'  => 'html',
+                'class' => '',
+                'html'  => '<input type="text" name="new-tag" value=""/> <button type="submit" name="new-tag_save" class="std-btn" title="No repetir tags, consultar al administrador">Añadir</button>'
+            ),
+
+            'booka' => array(
+                'title'     => 'Booka',
+                'type'  => 'html',
+                'class' => '',
+                'html'  => $booka_select
+            ),
+
+            /*
+            'url' => array(
+                'type'      => 'textbox',
+                'required'  => true,
+                'size'      => 20,
+                'title'     => 'enlace externo',
+                'value'     => $post->url,
+            ),
+             * 
+             */
 
             'date' => array(
                 'type'      => 'datebox',
-                'required'  => true,
                 'title'     => 'Fecha de publicación',
-                'hint'      => Text::get('tooltip-updates-date'),
                 'size'      => 8,
                 'value'     => $post->date
             ),
@@ -205,42 +305,16 @@ $(document).ready(function(){
                 'title'     => 'Permite comentarios',
                 'type'      => 'slider',
                 'options'   => $allow,
-                'class'     => 'currently cols_' . count($allow),
-                'hint'      => Text::get('tooltip-updates-allow_comments'),
-                'errors'    => !empty($errors['allow']) ? array($errors['allow']) : array(),
+                'class'     => 'currently cols_4',
                 'value'     => (int) $post->allow
             ),
-            'publish' => array(
-                'title'     => 'Publicado',
-                'type'      => 'slider',
-                'options'   => $allow,
-                'class'     => 'currently cols_' . count($allow),
-                'hint'      => Text::get('tooltip-updates-publish'),
-                'errors'    => !empty($errors['publish']) ? array($errors['publish']) : array(),
-                'value'     => (int) $post->publish
-            ),
-            'home' => array(
-                'title'     => 'En portada',
-                'type'      => 'slider',
-                'options'   => $allow,
-                'class'     => 'currently cols_' . count($allow),
-                'hint'      => Text::get('tooltip-updates-home'),
-                'errors'    => !empty($errors['home']) ? array($errors['home']) : array(),
-                'value'     => (int) $post->home
-            ),
-            'footer' => array(
-                'title'     => 'Enlace en footer',
-                'type'      => 'slider',
-                'options'   => $allow,
-                'class'     => 'currently cols_' . count($allow),
-                'hint'      => Text::get('tooltip-updates-footer'),
-                'errors'    => !empty($errors['footer']) ? array($errors['footer']) : array(),
-                'value'     => (int) $post->footer
-            )
+            'publish' => $publish
 
         )
 
     ));
     ?>
-
-</form>
+            
+            
+    </form>
+</div>

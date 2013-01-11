@@ -1,0 +1,311 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* Estilos de tipografías y tamaños */
+@font-face {
+  font-family: 'Droid';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Droid'), local('DroidSans'), url('/view/css/assets/fonts/droid.woff') format('woff');
+}
+@font-face {
+  font-family: 'Droid';
+  font-style: normal;
+  font-weight: bold;
+  src: local('Droid Bold'), local('Droid-Bold'), url('/view/css/assets/fonts/droid_bold.woff') format('woff');
+}
+@font-face {
+  font-family: 'Muli';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Muli'), url('/view/css/assets/fonts/muli.woff') format('woff');
+}
+@font-face {
+  font-family: 'Muli';
+  font-style: italic;
+  font-weight: normal;
+  src: local('Muli Italic'), local('Muli-Italic'), url('/view/css/assets/fonts/muli_italic.woff') format('woff');
+}
+@font-face {
+  font-family: 'Cabin';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Cabin'), local('CabinSketch'), url('/view/css/assets/fonts/cabin.woff') format('woff');
+}
+
+a, p, span, div, 
+li, blockquote, legend, fieldset,
+tr, td, th,
+textarea, input, button, 
+h3, h4, h5, h6, h7, h8 {
+    font-family: 'Droid', sans-serif;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+.supertitle {
+    font-size: 18px;
+    font-weight: normal;
+    font-family: 'Muli', sans-serif;
+}
+
+input[type="text"],
+input[type="password"],
+textarea {
+    font-size: 14px;
+    font-family: 'Muli', sans-serif;
+}
+
+/* tipos sueltos */
+.ft0 {
+    font-family: 'Droid', Arial, sans-serif !important;
+}
+
+.ft1 {
+    font-family: 'Cabin', Georgia, serif !important;
+}
+
+.ft2 {
+    font-family: 'Muli', Arial, sans-serif !important;
+}
+
+.ft3 {
+    font-family: Arial, sans-serif !important;
+}
+
+ th,
+ .strong,
+strong {
+    font-weight: bold;
+}
+
+/* tamaño XS */
+.fs-XS {
+    font-size: 11px !important;
+}
+
+/* tamaño S */
+div#footer a,
+.fs-S {
+    font-size: 12px !important;
+}
+
+div#navi-bar ul.down li a,
+h3.htitle {
+    font-size: 13px !important;
+}
+
+/* tamaño M */
+.fs-M,
+h2.htitle span, 
+h2.htitle {
+    font-size: 14px !important;
+}
+
+/* tamaño L */
+.fs-L {
+    font-size: 18px !important;
+}
+
+/* tamaño XL */
+.fs-XL {
+    font-size: 24px !important;
+}
+
+/* tamaño XXL */
+.fs-XXL {
+    font-size: 30px !important;
+}
+
+
+
+.htitle,
+.regular {
+    font-weight: normal !important;
+}
+
+.negrita {
+    font-weight: bold !important;
+}
+
+.htitle span {
+    text-transform: none !important;
+}
+
+.wide,
+.htitle,
+.upcase {
+    text-transform: uppercase;
+}
+
+.undline {
+    text-decoration: underline !important;
+}
+
+a.go-step:hover {
+    text-decoration: none !important;
+}
+
+.alignr {
+    text-align: right;
+}
+
+.alignl {
+    text-align: left;
+}
+
+/* ese tipo de letra rato en titulos
+// ya no, usamos una imagen para el logo
+h1 a span,
+h1 a {
+  font-family: 'Cabin', Georgia, serif;
+  font-size: 40px;
+}
+
+h1 a:hover span,
+h1 a:hover,
+*/
+ 
+ul.top-menu li a:hover,
+ul#top-mybooka li a:hover,
+div.three-cols div.field-block.action a:hover,
+div#footer div.block ul li a:hover {
+    text-decoration: none;
+}
+    
+div#sub-header h2,
+div#sub-header h2 a {
+  font-weight: 400;
+}
+
+div#sub-header.sh-info h2 {
+  font-size: 30px;
+}
+
+div#sub-header.sh-post h2 a {
+  font-size: 24px;
+  line-height: 32px;
+}
+
+div#sub-header.sh-info p,
+div#sub-header.sh-info p > * {
+  font-size: 18px;
+  line-height: 22px;
+}
+
+div.widget p, 
+div.widget p > *, 
+div#sub-header.sh-post p, 
+div#sub-header.sh-post p > *,
+div#sub-header.sh-booka p,
+div#sub-header.sh-booka p > *,
+div#sub-header.sh-user p,
+div#sub-header.sh-user p > * {
+  font-size: 14px;
+  line-height: 19px;
+}
+
+.rollover:hover,
+div#sub-header p > a,
+div.booka-content p > a {
+    text-decoration: underline;
+}
+
+div#sub-header.sh-booka h2,
+div#sub-header.sh-booka h2 a {
+    font-family: 'Droid', Arial, sans-serif !important;
+}
+
+div#sub-header.sh-booka h2,
+div#sub-header.sh-booka h2 a,
+div#sub-header.sh-user h2 {
+    font-size: 30px;
+}
+div#sub-header.sh-booka span.sh-booka-subtitle {
+    text-transform: uppercase;
+    font-size: 18px;
+}
+body.collection div#sub-header.sh-booka span.sh-booka-subtitle {
+    text-transform: none !important;
+}
+div#sub-header.sh-booka span.sh-booka-author,
+div#sub-header.sh-booka span.sh-booka-keywords {
+    font-size: 14px;
+    font-weight: 100;
+}
+
+ul.blog-side-list li a,
+div#sub-header.sh-user h2,
+div#sub-header.sh-user div.content span.sh-user-location {
+    font-family: 'Muli', Arial, sans-serif !important;
+}
+
+div#sub-header.sh-user span.sh-user-location {
+    font-size: 14px;
+}
+
+div#sub-header.sh-user span.sh-user-interests {
+    font-weight: 100;
+}
+
+div#sub-header.sh-post a.sh-post-next {
+    font-size: 11px;
+}
+
+div#sub-header.sh-post a.plus-info {
+    font-size: 14px;
+}
+
+
+div#footer div.block h8{
+    font-family: Arial, sans-serif !important;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+div#sub-footer ul li,
+div#sub-footer ul li a {
+    font-size: 11px;
+}
+/*
+div.field-block label {
+    font-size: 11px;
+}
+
+div.field-block input {
+    font-size: 12px;
+}
+*/
+
+div.field-block em {
+    font-size: 11px;
+    font-style: italic;
+}
+
+div.field-block-conditions label a {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    text-decoration: underline !important;
+}
+
+/* recuadro feedback superform */
+div.superform li.element > div.feedback > div {
+    line-height: 16px !important;
+}
+

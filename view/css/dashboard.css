@@ -16,4 +16,49 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
-@import url('dashboard/view.css');
+/* Estilos específicos para el panel de usuario */
+/* alineacion derecha */
+div.superform li#nif,
+div.superform li#zipcode,
+div.superform li#country {
+    float: right;
+}
+
+div.superform input#address {
+    width: 668px !important;
+}
+
+div.superform div.hint blockquote {
+    color: #670817 !important; /*rojo oscuro*/
+}
+
+
+/* campos de perfil en redes sociales */
+div.superform li.social-field {
+    padding: 0 0 0 50px !important;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-image: url('/view/css/assets/social/sprite_big.png');
+    height: 31px !important;
+    margin-top: 10px;
+}
+
+div.superform li.social-field.facebook {
+    background-position: 0px 0px;
+}
+
+div.superform li.social-field.twitter {
+    background-position: 0px -56px;
+}
+
+div.superform li.social-field.google {
+    background-position: 0px -112px;
+}
+
+div.superform li.social-field.linkedin {
+    background-position: 0px -168px;
+}
+
+body.dashboard div.superform input[type="submit"] {
+    margin: 10px;
+}

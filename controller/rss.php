@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,42 +18,40 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+    use Base\Model,
+        Base\Library;
 
-    use Goteo\Model,
-        Goteo\Library;
-
-    class Rss extends \Goteo\Core\Controller {
+    class Rss extends \Base\Core\Controller {
         
         public function index () {
             
             // sacamos su blog
-            $blog = Model\Blog::get(\GOTEO_NODE, 'node');
+            $posts = Model\Post::getAll();
 
-            $tags = Model\Blog\Post\Tag::getAll();
+            $tags = Model\Post\Tag::getAll();
 
             /*
             echo '<pre>'.print_r($tags, 1).'</pre>';
-            echo '<pre>'.print_r($blog->posts, 1).'</pre>';
+            echo '<pre>'.print_r($posts, 1).'</pre>';
             die;
-             * 
-             */
+            */
 
             // al ser xml no usaremos vista
             // usaremos FeedWriter
 
             // configuracion
             $config = array(
-                'title' => 'Goteo Rss',
-                'description' => 'Blog Goteo.org rss',
+                'title' => 'Rss',
+                'description' => 'Blog rss',
                 'link' => SITE_URL,
                 'indent' => 6
             );
 
             $data = array(
                 'tags' => $tags,
-                'posts' => $blog->posts
+                'posts' => $posts
             );
 
             \header("Content-Type: application/rss+xml");

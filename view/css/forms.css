@@ -1,0 +1,228 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* Estilos de formularios y campos */
+
+/*
+input[type="submit"],
+input[type="reset"],
+button,
+a.button {
+    text-transform: uppercase;
+    border: none;    
+    cursor: pointer;
+    display: inline-block;
+    text-decoration: none;    
+    text-align: center;
+    border-radius: 3px;
+    -o-border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    padding: .4em 1.3em .4em;
+    margin-top: .8em;
+    margin-right: 0;
+    margin-bottom: .5em;
+}
+*/
+
+/* botones de pastilla */
+input[type="submit"],
+input[type="reset"],
+button.std-btn,
+a.button.std-btn {
+    background: -moz-linear-gradient(
+            top,
+            #FAF8EC 0%,
+            #E4E1D8);
+    background: -webkit-gradient(
+            linear, left top, left bottom, 
+            from(#FAF8EC),
+            to(#E4E1D8));
+    border-radius: 37px;
+    -o-border-radius: 37px;
+    -moz-border-radius: 37px;
+    -webkit-border-radius: 37px;
+    border: 1px solid #DBDAD5;
+    -moz-box-shadow:
+            1px 2px 2px rgba(000,000,000,0.6),
+            inset 0px 0px 3px rgba(255,255,255,1);
+    -webkit-box-shadow:
+            1px 2px 2px rgba(000,000,000,0.6),
+            inset 0px 0px 3px rgba(255,255,255,1);
+    box-shadow:
+            1px 2px 2px rgba(000,000,000,0.6),
+            inset 0px 0px 3px rgba(255,255,255,1);
+}
+
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+button.std-btn:hover,
+a.button.std-btn:hover {
+    background: -moz-linear-gradient(
+            top,
+            #F2F2EA 0%,
+            #E5E1D5);
+    background: -webkit-gradient(
+            linear, left top, left bottom, 
+            from(#F2F2EA),
+            to(#E5E1D5));
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    text-shadow: none;
+    text-decoration: none;
+    cursor: pointer;
+    position: relative;
+    top: 3px;
+    left: 3px;
+}
+
+a.button.std-btn,
+button.std-btn,
+input.std-btn[type="submit"],
+input.std-btn[type="reset"] {
+    padding: 3px 35px;
+}
+a.button.std-btn.tight,
+button.std-btn.tight,
+input.std-btn.tight[type="submit"],
+input.std-btn.tight[type="reset"] {
+    padding: 3px 10px !important;
+}
+a.button.std-btn.wide,
+button.std-btn.wide,
+input.std-btn.wide[type="submit"],
+input.std-btn.wide[type="reset"] {
+    padding: 3px 65px !important;
+}
+
+/*
+body.admin button,
+body.admin a.button {
+    padding: 3px 30px;
+    display: inline-block;
+    margin: 0 10px 10px 0px;
+}
+*/
+
+body.admin input[type="submit"],
+body.admin input[type="reset"] {
+    padding: 3px 36px;
+    margin: 10px;
+}
+
+a.button.std-btn.centered,
+button.std-btn.centered {
+    margin-left: 60px;
+    width: 180px;
+    margin-bottom: 30px;
+}
+
+
+/* fin botones de pastilla */
+
+textarea,
+fieldset {
+    padding: .3em;
+}
+
+select,
+input[type="text"],
+input[type="password"],
+textarea {
+    background-color: white !important;
+    border: 2px solid #DAD8CC;
+    border-radius: 3px;
+    -o-border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+select:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+textarea:focus {    
+    border: 2px solid #66CCCC;
+    outline: none;
+}
+
+input.disabled[type="submit"],
+input.disabled[type="reset"],
+button.disabled,
+a.button.disabled,
+input.disabled[type="submit"]:hover,
+input.disabled[type="reset"]:hover,
+button.disabled:hover,
+a.button.disabled:hover {
+    background: #CCCCCC !important;
+    color: white !important;
+    -moz-box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    text-decoration: none !important;
+    cursor: default;
+}
+
+/* inputs de diseño especial */
+input#search_query,
+input#suscribe_mail,
+input#search_query:focus,
+input#suscribe_mail:focus {
+    border: none;
+}
+
+input#search_query {
+    background: url('/view/css/assets/searcher.png') no-repeat 0px 0px transparent;
+    padding: 4px 5px 4px 25px;
+    width: 130px;
+    font-size: 12px !important;
+}
+input#suscribe_mail {
+    background: url('/view/css/assets/input.png') no-repeat 0px 0px transparent;
+    padding: 4px 5px;
+    width: 150px;
+    font-size: 12px !important;
+}
+/* fin inputs especiañes*/
+
+
+/* Boton > */
+button.go-btn {
+    width: 7px;
+    height: 11px;
+    overflow: hidden;
+    border: none !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat;
+    background-image: url('/view/css/assets/arrows/go.png');
+    margin: 0px 0px 7px 6px;
+    text-indent: 100px; 
+    vertical-align: bottom;
+}
+
+/* Flechita forward derecha, por defecto */
+button.go-btn {
+    background-position: 0px 0px;
+}
+/* y el correspondiente rollover, flechita negra */
+button.go-btn:hover {
+    background-position: 0px -15px !important;
+    cursor: pointer;
+}
+

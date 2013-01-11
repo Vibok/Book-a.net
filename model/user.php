@@ -18,29 +18,28 @@
  *
  */
 
+namespace Base\Model {
 
-namespace Goteo\Model {
+	use Base\Core\Redirection,
+        Base\Library\Text,
+        Base\Model\Image,
+        Base\Library\Template,
+        Base\Library\Mail,
+        Base\Library\Check,
+        Base\Library\Advice;
 
-	use Goteo\Core\Redirection,
-        Goteo\Library\Text,
-        Goteo\Model\Image,
-        Goteo\Library\Template,
-        Goteo\Library\Mail,
-        Goteo\Library\Check,
-        Goteo\Library\Message;
-
-	class User extends \Goteo\Core\Model {
+	class User extends \Base\Core\Model {
 
         public
             $id = false,
+            $lang,
             $userid, // para el login name al registrarse
             $email,
             $password, // para gestion de super admin
             $name,
-            $location,
+            $level,
             $avatar = false,
             $about,
-            $contribution,
             $keywords,
             $active,  // si no activo, no puede loguear
             $confirmed,  // si no ha confirmado el email
@@ -48,13 +47,13 @@ namespace Goteo\Model {
             $facebook,
             $google,
             $twitter,
-            $identica,
             $linkedin,
             $created,
             $modified,
+            $web,
             $interests = array(),
-            $webs = array(),
-            $roles = array();
+            $roles = array(),
+            $collection = null;
 
         /**
          * Sobrecarga de métodos 'setter'.
@@ -77,14 +76,11 @@ namespace Goteo\Model {
          */
         public function __get ($name) {
             if($name == "token") {
-	            return $this->getToken();
-	        }
-	        if($name == "support") {
-	            return $this->getSupport();
-	        }
-	        if($name == "worth") {
-	            return $this->getWorth();
-	        }
+                return $this->getToken();
+            }
+            if($name == "support") {
+                return $this->getSupport();
+            }
             return $this->$name;
         }
 
@@ -104,20 +100,19 @@ namespace Goteo\Model {
                     $insert = true;
                     $data[':id'] = $this->id = static::idealiza($this->userid);
                     $data[':name'] = $this->name;
-                    $data[':location'] = $this->location;
                     $data[':email'] = $this->email;
                     $data[':token'] = $token = md5(uniqid());
                     if(!in_array('password',$skip_validations)) $data[':password'] = sha1($this->password);
                     $data[':created'] = date('Y-m-d H:i:s');
                     $data[':active'] = true;
-                    $data[':confirmed'] = false;
+                    $data[':confirmed'] = $this->confirmed;
+                    $data[':lang'] = \LANG;
 
                     // Rol por defecto.
                     if (!empty($this->id)) {
-                        static::query('REPLACE INTO user_role (user_id, role_id, node_id) VALUES (:user, :role, :node);', array(
+                        static::query('REPLACE INTO user_role (user_id, role_id) VALUES (:user, :role);', array(
                             ':user' => $this->id,
-                            ':role' => 'user',
-                            ':node' => '*',
+                            ':role' => 'user'
                         ));
                     }
 
@@ -136,19 +131,24 @@ namespace Goteo\Model {
 						$content = \str_replace($search, $replace, $template->text);
 
 						// Activación
-						$mail = new Mail();
-						$mail->to = $this->email;
-						$mail->toName = $this->name;
-						$mail->subject = $subject;
-						$mail->content = $content;
-						$mail->html = false;
-						$mail->template = $template->id;
-						if ($mail->send($errors)) {
-							Message::Info(Text::get('register-confirm_mail-success'));
-						} else {
-							Message::Error(Text::get('register-confirm_mail-fail', GOTEO_MAIL));
-							Message::Error(implode('<br />', $errors));
-						}
+                        // si estamos en local ni lo intentamos y seguimos
+                        if (\CONF_LOCAL) {
+                            Advice::Info(SITE_URL . '/user/activate/' . $token);
+                        } else {
+                            $mail = new Mail();
+                            $mail->to = $this->email;
+                            $mail->toName = $this->name;
+                            $mail->subject = $subject;
+                            $mail->content = $content;
+                            $mail->html = false;
+                            $mail->template = $template->id;
+                            if ($mail->send($errors)) {
+//                                Advice::Info(Text::get('register-confirm_mail-success'));
+                            } else {
+                                Advice::Error(Text::get('register-confirm_mail-fail', CONF_MAIL));
+                                Advice::Error(implode('<br />', $errors));
+                            }
+                        }
 					}
                 }
                 else {
@@ -189,90 +189,18 @@ namespace Goteo\Model {
                     // Avatar
                     if (is_array($this->avatar) && !empty($this->avatar['name'])) {
                         $image = new Image($this->avatar);
-                        $image->save();
-                        $data[':avatar'] = $image->id;
+                        if ($image->save()) {
+                            $data[':avatar'] = $image->id;
 
-                        /**
-                         * Guarda la relación NM en la tabla 'user_image'.
-                         */
-                        if(!empty($image->id)) {
-                            self::query("REPLACE user_image (user, image) VALUES (:user, :image)", array(':user' => $this->id, ':image' => $image->id));
+                        } else {
+                            Advice::Error(Text::get('image-upload-fail') . implode(', ', $errors));
+                            $data[':avatar'] = '';
                         }
                     }
 
                     // Perfil público
                     if(isset($this->name)) {
                         $data[':name'] = $this->name;
-                    }
-
-                    // Dónde está
-                    if(isset($this->location)) {
-                        $data[':location'] = $this->location;
-                    }
-
-                    if(isset($this->about)) {
-                        $data[':about'] = $this->about;
-                    }
-
-                    if(isset($this->keywords)) {
-                        $data[':keywords'] = $this->keywords;
-                    }
-
-                    if(isset($this->contribution)) {
-                        $data[':contribution'] = $this->contribution;
-                    }
-
-                    if(isset($this->facebook)) {
-                        $data[':facebook'] = $this->facebook;
-                    }
-
-                    if(isset($this->google)) {
-                        $data[':google'] = $this->google;
-                    }
-
-                    if(isset($this->twitter)) {
-                        $data[':twitter'] = $this->twitter;
-                    }
-
-                    if(isset($this->identica)) {
-                        $data[':identica'] = $this->identica;
-                    }
-
-                    if(isset($this->linkedin)) {
-                        $data[':linkedin'] = $this->linkedin;
-                    }
-
-                    // Intereses
-                    $interests = User\Interest::get($this->id);
-                    if(!empty($this->interests)) {
-                        foreach($this->interests as $interest) {
-                            if(!in_array($interest, $interests)) {
-                                $_interest = new User\Interest();
-                                $_interest->id = $interest;
-                                $_interest->user = $this->id;
-                                $_interest->save($errors);
-                                $interests[] = $_interest;
-                            }
-                        }
-                    }
-                    foreach($interests as $key => $interest) {
-                        if(!in_array($interest, $this->interests)) {
-                            $_interest = new User\Interest();
-                            $_interest->id = $interest;
-                            $_interest->user = $this->id;
-                            $_interest->remove($errors);
-                        }
-                    }
-
-                    // Webs
-                    static::query('DELETE FROM user_web WHERE user= ?', $this->id);
-                    if (!empty($this->webs)) {
-                        foreach ($this->webs as $web) {
-                            if ($web instanceof User\Web) {
-                                $web->user = $this->id;
-                                $web->save($errors);
-                            }
-                        }
                     }
                 }
 
@@ -307,36 +235,6 @@ namespace Goteo\Model {
             }
             return false;
         }
-
-		public function saveLang (&$errors = array()) {
-
-			$fields = array(
-				'id'=>'id',
-				'lang'=>'lang',
-				'about'=>'about_lang',
-				'keywords'=>'keywords_lang',
-				'contribution'=>'contribution_lang'
-				);
-
-			$set = '';
-			$values = array();
-
-			foreach ($fields as $field=>$ffield) {
-				if ($set != '') $set .= ", ";
-				$set .= "`$field` = :$field ";
-				$values[":$field"] = $this->$ffield;
-			}
-
-			try {
-				$sql = "REPLACE INTO user_lang SET " . $set;
-				self::query($sql, $values);
-            	
-				return true;
-			} catch(\PDOException $e) {
-                $errors[] = "El usuario {$this->id} no se ha grabado correctamente. Por favor, revise los datos." . $e->getMessage();
-                return false;
-			}
-		}
 
         /**
          * Validación de datos de usuario.
@@ -376,6 +274,9 @@ namespace Goteo\Model {
                         $errors['email'] = Text::get('error-register-email-exists');
                     }
                 }
+
+                // los nif sin guiones, espacios ni puntos
+                $this->nif = str_replace(array('_', '.', ' ', '-', ',', ')', '('), '', $this->nif);
 
                 // Contraseña
                 if(!in_array('password',$skip_validations))  {
@@ -427,7 +328,6 @@ namespace Goteo\Model {
             if (\str_replace(Text::get('regular-facebook-url'), '', $this->facebook) == '') $this->facebook = '';
             if (\str_replace(Text::get('regular-google-url'), '', $this->google) == '') $this->google = '';
             if (\str_replace(Text::get('regular-twitter-url'), '', $this->twitter) == '') $this->twitter = '';
-            if (\str_replace(Text::get('regular-identica-url'), '', $this->identica) == '') $this->identica = '';
             if (\str_replace(Text::get('regular-linkedin-url'), '', $this->linkedin) == '') $this->linkedin = '';
 
 
@@ -498,42 +398,30 @@ namespace Goteo\Model {
          * @param string $id    Nombre de usuario
          * @return obj|false    Objeto de usuario, en caso contrario devolverÃ¡ 'false'.
          */
-        public static function get ($id, $lang = null) {
+        public static function get ($id) {
             try {
-                if (!$lang == 'es') $lang = null;
-
                 $sql = "
                     SELECT
                         user.id as id,
                         user.email as email,
                         user.name as name,
-                        user.location as location,
+                        user.level as level,
                         user.avatar as avatar,
-                        IFNULL(user_lang.about, user.about) as about,
-                        IFNULL(user_lang.contribution, user.contribution) as contribution,
-                        IFNULL(user_lang.keywords, user.keywords) as keywords,
-                        user.facebook as facebook,
-                        user.google as google,
-                        user.twitter as twitter,
-                        user.identica as identica,
-                        user.linkedin as linkedin,
                         user.active as active,
                         user.confirmed as confirmed,
                         user.hide as hide,
                         user.created as created,
-                        user.modified as modified
+                        user.modified as modified,
+                        user.lang as lang
                     FROM user
-                    LEFT JOIN user_lang
-                        ON  user_lang.id = user.id
-                        AND user_lang.lang = :lang
                     WHERE user.id = :id
                     ";
 
-                $query = static::query($sql, array(':id' => $id, ':lang' => $lang));
+                $query = static::query($sql, array(':id' => $id));
                 $user = $query->fetchObject(__CLASS__);
 
-                if (!$user instanceof  \Goteo\Model\User) {
-                    throw new \Goteo\Core\Error('404', Text::html('fatal-error-user'));
+                if (!$user instanceof  \Base\Model\User) {
+                    throw new \Base\Core\Error('404', Text::html('fatal-error-user'));
                 }
 
                 $user->roles = $user->getRoles();
@@ -541,8 +429,26 @@ namespace Goteo\Model {
                 if (empty($user->avatar->id) || !$user->avatar instanceof Image) {
                     $user->avatar = Image::get(1);
                 }
-                $user->interests = User\Interest::get($id);
-                $user->webs = User\Web::get($id);
+                
+                $data = User::getData($id);
+                $user->about    = $data->about;
+                $user->keywords = $data->keywords;
+                $user->web      = $data->web;
+                $user->facebook = $data->facebook;
+                $user->twitter  = $data->twitter;
+                $user->google   = $data->google;
+                $user->linkedin = $data->linkedin;
+
+                // y los intereses
+                $user->interests = User\Interest::getAll($id);
+                
+                // si es director, sacamos su colección
+                if (isset($user->roles['director'])) {
+                    $user->collection = User::getCollection($id);
+                } else {
+                    $user->collection = null;
+                }
+                
                 return $user;
             } catch(\PDOException $e) {
                 return false;
@@ -556,6 +462,7 @@ namespace Goteo\Model {
                     SELECT
                         id,
                         name,
+                        level,
                         avatar,
                         email
                     FROM user
@@ -584,43 +491,39 @@ namespace Goteo\Model {
             $users = array();
 
             $sqlFilter = "";
+            if (!empty($filters['id'])) {
+                $sqlFilter .= " AND id = :id";
+                $values[':id'] = $filters['id'];
+            }
             if (!empty($filters['name'])) {
-                $sqlFilter .= " AND ( name LIKE ('%{$filters['name']}%') OR email LIKE ('%{$filters['name']}%') )";
+                $sqlFilter .= " AND (name LIKE :name OR email LIKE :name)";
+                $values[':name'] = "%{$filters['name']}%";
             }
             if (!empty($filters['status'])) {
-                $active = $filters['status'] == 'active' ? '1' : '0';
-                $sqlFilter .= " AND active = '$active'";
-            }
-            if (!empty($filters['interest'])) {
-                $sqlFilter .= " AND id IN (
-                    SELECT user
-                    FROM user_interest
-                    WHERE interest = {$filters['interest']}
-                    ) ";
+                $sqlFilter .= " AND active = :active";
+                $values[':active'] = $filters['status'] == 'active' ? '1' : '0';
             }
             if (!empty($filters['role'])) {
                 $sqlFilter .= " AND id IN (
                     SELECT user_id
                     FROM user_role
-                    WHERE role_id = '{$filters['role']}'
+                    WHERE role_id = :role
                     ) ";
+                $values[':role'] = $filters['role'];
             }
-            if (!empty($filters['posted'])) {
-                /*
-                 * Si ha enviado algun mensaje o comentario
-                $sqlFilter .= " AND id IN (
-                    SELECT user
-                    FROM message
-                    WHERE interest = {$filters['interest']}
-                    ) ";
-                 *
-                 */
+
+            // si es solo los usuarios normales, añadimos HAVING
+            if ($filters['role'] == 'user') {
+                $sqlOrder .= " HAVING roles <= 1";
             }
 
             //el Order
             switch ($filters['order']) {
                 case 'name':
                     $sqlOrder .= " ORDER BY name ASC";
+                break;
+                case 'id':
+                    $sqlOrder .= " ORDER BY id ASC";
                 break;
                 default:
                     $sqlOrder .= " ORDER BY created DESC";
@@ -633,16 +536,15 @@ namespace Goteo\Model {
                         email,
                         active,
                         hide,
-                        DATE_FORMAT(created, '%d/%m/%Y %H:%i:%s') as register_date
+                        DATE_FORMAT(created, '%d | %m | %Y %H:%i:%s') as register_date,
+                        (SELECT COUNT(role_id) FROM user_role WHERE user_id = user.id) as roles
                     FROM user
                     WHERE id != 'root'
                         $sqlFilter
                    $sqlOrder
                     ";
 
-
-
-            $query = self::query($sql, array($node));
+            $query = self::query($sql, $values);
             foreach ($query->fetchAll(\PDO::FETCH_CLASS, __CLASS__) as $user) {
 
                 $query = static::query("
@@ -652,16 +554,27 @@ namespace Goteo\Model {
                     WHERE user_id = :id
                     ", array(':id' => $user->id));
                 foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $role) {
-                    if ($role->role_id == 'checker') {
-                        $user->checker = true;
-                    }
-                    if ($role->role_id == 'translator') {
-                        $user->translator = true;
+                    if ($role->role_id == 'superadmin') {
+                        $user->superadmin = true;
                     }
                     if ($role->role_id == 'admin') {
                         $user->admin = true;
                     }
+                    if ($role->role_id == 'checker') {
+                        $user->checker = true;
+                    }
+                    if ($role->role_id == 'director') {
+                        $user->director = true;
+                    }
+                    if ($role->role_id == 'vip-blog') {
+                        $user->colBlog = true;
+                    }
+                    if ($role->role_id == 'vip-booka') {
+                        $user->colBooka = true;
+                    }
                 }
+
+                // proyectos aportados y cantidad aportada
 
                 $users[] = $user;
             }
@@ -691,7 +604,7 @@ namespace Goteo\Model {
         }
 
         /*
-         * Listado simple de los usuarios que han creado proyectos
+         * Listado simple de los usuarios que han creado Bookas
          */
         public static function getOwners() {
 
@@ -702,8 +615,8 @@ namespace Goteo\Model {
                     user.id as id,
                     user.name as name
                 FROM    user
-                INNER JOIN project
-                    ON project.owner = user.id
+                INNER JOIN booka
+                    ON booka.owner = user.id
                 ORDER BY user.name ASC
                 ");
 
@@ -713,30 +626,6 @@ namespace Goteo\Model {
 
             return $list;
         }
-
-        /*
-         * Listado id-nombre-email de los usuarios que siguen teniendo su email como contraseña
-        public static function getWorkshoppers() {
-
-            $list = array();
-
-            $query = static::query("
-                SELECT
-                    user.id as id,
-                    user.name as name,
-                    user.email as email
-                FROM    user
-                WHERE BINARY password = SHA1(user.email)
-                ORDER BY user.name ASC
-                ");
-
-            foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $item) {
-                $list[] = $item;
-            }
-
-            return $list;
-        }
-         */
 
 		/**
 		 * Validación de usuario.
@@ -763,7 +652,7 @@ namespace Goteo\Model {
 			    if($user->active) {
 			        return $user;
 			    } else {
-			        Message::Error(Text::get('user-account-inactive'));
+			        Advice::Error(Text::get('user-account-inactive'));
 			    }
 			}
 			return false;
@@ -891,13 +780,13 @@ namespace Goteo\Model {
                 $mail->send($errors);
                 unset($mail);
 
-                // email a los de goteo
+                // email al admin
                 $mail = new Mail();
-                $mail->to = \GOTEO_MAIL;
-                $mail->toName = 'Admin Goteo';
+                $mail->to = \CONF_MAIL;
+                $mail->toName = 'Admin ';
                 $mail->subject = 'El usuario ' . $row->id . ' se da de baja';
                 $mail->content = '<p>Han solicitado la baja para el mail <strong>'.$email.'</strong> que corresponde al usuario <strong>'.$row->name.'</strong>';
-                if (!empty($message)) $mail->content .= 'y ha dejado el siguiente mensaje:</p><p> ' . $message;
+                if (!empty($message)) $mail->content .= ', ha dejado el siguiente mensaje:</p><p> ' . $message;
                 $mail->content .= '</p>';
                 $mail->fromName = "{$row->name}";
                 $mail->from = $row->email;
@@ -967,27 +856,105 @@ namespace Goteo\Model {
          * @return type array
          */
     	private function getSupport () {
-            $query = self::query('SELECT DISTINCT(project) FROM invest WHERE user = ? AND (status = 0 OR status = 1 OR status = 3 OR status = 4)', array($this->id));
-            $projects = $query->fetchAll(\PDO::FETCH_ASSOC);
+            $query = self::query('SELECT DISTINCT(booka) FROM invest WHERE user = ? AND (status = 0 OR status = 1 OR status = 3 OR status = 4)', array($this->id));
+            $bookas = $query->fetchAll(\PDO::FETCH_ASSOC);
             $query = self::query('SELECT SUM(amount), COUNT(id) FROM invest WHERE user = ? AND (status = 0 OR status = 1 OR status = 3 OR status = 4)', array($this->id));
             $invest = $query->fetch();
-            return array('projects' => $projects, 'amount' => $invest[0], 'invests' => $invest[1]);
+            return array('bookas' => $bookas, 'amount' => $invest[0], 'invests' => $invest[1]);
         }
 
 	    /**
-    	 * Nivel actual de meritocracia. (1-5)
-    	 * [Recalcula y actualiza el registro en db]
+    	 * Nivel de uso del usuario
     	 *
-    	 * @return type int	Worth::id
+    	 * @return type int	Level
     	 */
-    	private function getWorth () {
-            $query = self::query('SELECT id FROM worthcracy WHERE amount <= ? ORDER BY amount DESC LIMIT 1', array($this->support['amount']));
-            $worth = $query->fetchColumn();
-    	    $query = self::query('SELECT worth FROM user WHERE id = ?', array($this->id));
-            if($worth !== $query->fetchColumn()) {
-                self::query('UPDATE user SET worth = :worth WHERE id = :id', array(':id' => $this->id, ':worth' => $worth));
+    	public function setLevel ($level) {
+
+            // calculamos el nivel de uso
+            if (self::query('UPDATE user SET level = :level WHERE id = :id', array(':id' => $this->id, ':level' => $level))) {
+                $this->level = $level;
+                return true;
+            } else {
+                return false;
             }
-            return $worth;
+        }
+
+        /**
+         * Para sacar los datos de perfil del usuario
+         *
+         * @return type array
+         */
+        public static function getData ($id) {
+            $query = self::query('SELECT
+                                        about,
+                                        keywords,
+                                        web,
+                                        twitter,
+                                        facebook,
+                                        google,
+                                        linkedin
+                                  FROM user_data
+                                  WHERE user = ?'
+                , array($id));
+
+            $data = $query->fetchObject();
+            return $data;
+        }
+
+        /**
+         * Para sacar la colección de un director
+         *
+         * @return type array
+         */
+        public static function getCollection ($id) {
+            $query = self::query('SELECT
+                                        collection
+                                  FROM user_collection
+                                  WHERE user = ?'
+                , array($id));
+
+            $data = $query->fetchColumn();
+            return $data;
+        }
+
+        /**
+         * Actualizar los datos del perfil
+         *
+         * @return type booblean
+         */
+        public static function setData ($user, $data = array(), &$errors = array()) {
+
+            $fields = array(
+                  'about',
+                  'keywords',
+                  'web',
+                  'twitter',
+                  'facebook',
+                  'google',
+                  'linkedin'
+            );
+
+            $values = array();
+            $set = '';
+
+            foreach ($data as $key=>$value) {
+                $values[":$key"] = $value;
+                if ($set != '') $set .= ', ';
+                $set .= "$key = :$key";
+            }
+
+            $values[':user'] = $user;
+            $sql = "REPLACE INTO user_data SET user = :user, " . $set;
+
+            try {
+                self::query($sql, $values);
+                return true;
+
+            } catch (\PDOException $e) {
+                $errors[] = "FALLO al actualizar el registro de datos del perfil" . $e->getMessage();
+                return false;
+            }
+
         }
 
         /**
@@ -997,12 +964,11 @@ namespace Goteo\Model {
          */
         public static function getPersonal ($id) {
             $query = self::query('SELECT
-                                      contract_name,
-                                      contract_nif,
-                                      phone,
+                                      nif,
                                       address,
                                       zipcode,
                                       location,
+                                      city,
                                       country
                                   FROM user_personal
                                   WHERE user = ?'
@@ -1023,6 +989,8 @@ namespace Goteo\Model {
             if ($force) {
                 // actualizamos los datos
                 $ins = 'REPLACE';
+                // el nombre va en el registro de usuario
+                self::query('UPDATE user SET name = :name WHERE id = :id', array(':id'=>$user, 'name'=>$data['name']));
             } else {
                 // solo si no existe el registro
                 $ins = 'INSERT';
@@ -1034,16 +1002,15 @@ namespace Goteo\Model {
 
 
             $fields = array(
-                  'contract_name',
-                  'contract_nif',
-                  'phone',
+                  'nif',
                   'address',
                   'zipcode',
                   'location',
+                  'city',
                   'country'
             );
 
-            $values = array();
+            $values = array(':user' => $user);
             $set = '';
 
             foreach ($data as $key=>$value) {
@@ -1079,9 +1046,10 @@ namespace Goteo\Model {
         public static function getPreferences ($id) {
             $query = self::query('SELECT
                                       updates,
-                                      threads,
-                                      rounds,
-                                      mailing
+                                      messages,
+                                      progress,
+                                      mailing,
+                                      sideads
                                   FROM user_prefer
                                   WHERE user = ?'
                 , array($id));
@@ -1142,49 +1110,46 @@ namespace Goteo\Model {
 
 		}
 
+        /* listado de roles */
+		public static function getRolesList () {
+
+            $roles = array();
+
+		    $query = self::query('SELECT role.id as id, role.name as name FROM role ORDER BY role.name');
+            foreach ($query->fetchAll(\PDO::FETCH_OBJ) as $rol) {
+                $roles[$rol->id] = $rol->name;
+            }
+            return $roles;
+
+		}
+
 
         /*
-         * Lista de proyectos cofinanciados
+         * Lista de Bookas cofinanciados
          */
         public static function invested($user, $publicOnly = true)
         {
-            $projects = array();
+            $bookas = array();
 
-            $sql = "SELECT project.id
-                    FROM  project
+            $sql = "SELECT booka.id
+                    FROM  booka
                     INNER JOIN invest
-                        ON project.id = invest.project
+                        ON booka.id = invest.booka
                         AND invest.user = ?
-                        AND (invest.status = 0 OR invest.status = 1)
-                    WHERE project.status < 7
+                        AND invest.status IN (0, 1, 3)
+                    WHERE booka.status < 6
                     ";
             if ($publicOnly) {
-                $sql .= "AND project.status >= 3
+                $sql .= "AND booka.status >= 3
                     ";
             }
-            $sql .= "GROUP BY project.id
-                    ORDER BY name ASC
-                    ";
-
-            /*
-             * Restriccion de que no aparecen los que cofinancio que esten en edicion
-             *  solamente no sacamos los caducados
-             * project.status > 1 AND
-             */
+            $sql .= "GROUP BY booka.id";
 
             $query = self::query($sql, array($user));
             foreach ($query->fetchAll(\PDO::FETCH_CLASS) as $proj) {
-                $projects[] = \Goteo\Model\Project::get($proj->id);
+                $bookas[] = \Base\Model\Booka::getmedium($proj->id);
             }
-            return $projects;
-        }
-
-        public static function calcWorth($userId) {
-            $query = self::query('SELECT id FROM worthcracy WHERE amount <= (SELECT SUM(amount) FROM invest WHERE user = ? AND (status = 0 OR status = 1)) ORDER BY amount DESC LIMIT 1', array($userId));
-            $worth = $query->fetchColumn();
-            self::query('UPDATE user SET worth = :worth WHERE id = :id', array(':id' => $userId, ':worth' => $worth));
-
-            return $worth;
+            return $bookas;
         }
 
         /**
@@ -1197,6 +1162,29 @@ namespace Goteo\Model {
         public static function cancel($userId) {
 
             if (self::query('UPDATE user SET active = 0, hide = 1 WHERE id = :id', array(':id' => $userId))) {
+                return true;
+            } else {
+                return false;
+            }
+
+        }
+
+        /**
+         * Metodo para saber si el usuario ha bloqueado este envio de mailing
+         *
+         * @param string $userId
+         * @param string $mailingCode Tipo de envio de mailing. Default: newsletter
+         * @return bool
+         */
+        public static function mailBlock($userId, $mailingCode = 'mailing') {
+
+            $values = array(':user' => $userId);
+
+            $sql = "SELECT user_prefer.{$mailingCode} as blocked FROM user_prefer WHERE user_prefer.user = :user";
+
+            $query = self::query($sql, $values);
+            $block = $query->fetchColumn();
+            if ($block == 1) {
                 return true;
             } else {
                 return false;

@@ -1,0 +1,243 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* Estilos de colores de textos y fondos */
+body {
+    background-color: white;
+}
+
+div#main.sided div.center > div.center-widget,
+div#main.sided div.side > div.side-widget,
+div.three-cols,
+div.widget,
+div#sub-header, 
+.cf1 {
+    background-color: #F5F2E3;
+}
+
+div#header,
+.cf2 {
+    background-color: rgb(228, 224, 205);
+    background: linear-gradient(90deg, rgb(228, 224, 205) 50%, rgb(247, 245, 233) 67%);
+    background: -moz-linear-gradient(90deg, rgb(228, 224, 205) 50%, rgb(247, 245, 233) 67%);
+    background: -webkit-linear-gradient(90deg, rgb(228, 224, 205) 50%, rgb(247, 245, 233) 67%);
+    background: -o-linear-gradient(90deg, rgb(228, 224, 205) 50%, rgb(247, 245, 233) 67%);
+    background: -ms-linear-gradient(90deg, rgb(228, 224, 205) 50%, rgb(247, 245, 233) 67%);
+}
+
+.cf3 {
+    background-color: #333366;
+}
+
+.cf4 {
+    background-color: rgb(219, 214, 192);
+    background: linear-gradient(90deg, rgb(222, 216, 202) 50%, rgb(233, 230, 213) 67%);
+    background: -moz-linear-gradient(90deg, rgb(222, 216, 202) 50%, rgb(233, 230, 213) 67%);
+    background: -webkit-linear-gradient(90deg, rgb(222, 216, 202) 50%, rgb(233, 230, 213) 67%);
+    background: -o-linear-gradient(90deg, rgb(222, 216, 202) 50%, rgb(233, 230, 213) 67%);
+    background: -ms-linear-gradient(90deg, rgb(222, 216, 202) 50%, rgb(233, 230, 213) 67%);
+}
+
+/* fin fondos */
+
+a, p, span, div,
+li, blockquote, legend, fieldset,
+tr, td, th,
+textarea, input, button, 
+h1, h3, h4, h5, h6, h7, h8 {
+    color: #5A5855;
+}
+
+h1 a:hover,
+h2,
+h2 a,
+.supertitle,
+ul#top-mybooka li a.top-mybooka-myname,
+div#footer div.block ul li a,
+div#footer div.social ul li span, 
+div.field-block-conditions label a:hover,
+div.field-block-conditions.active label a:hover,
+div#sub-header p > a:hover,
+div.post-content p a,
+div.booka-content p a:hover,
+.ct1 {
+    color: #669999; /*VERDE-BOOKA*/
+}
+
+.rollover:hover,
+body.admin label,
+div.superform h4, div.superform h5, div.superform h6,
+body.admin a:hover,
+div.field-block label,
+div.three-cols ul.sign-in-with li.social-button a:hover,
+h2 a:hover {
+    color: #669999 !important; /*VERDE-BOOKA*/
+}
+
+a.go-step.current,
+a.go-step:hover,
+input.std-btn.edit[type="submit"],
+button.std-btn.edit,
+a.button.std-btn.edit,
+input.std-btn.edit[type="submit"]:hover,
+button.std-btn.edit:hover,
+a.button.std-btn.edit:hover,
+input.std-btn.remove[type="submit"],
+button.std-btn.remove,
+a.button.std-btn.remove,
+input.std-btn.remove[type="submit"]:hover,
+button.std-btn.remove:hover,
+a.button.std-btn.remove:hover {
+    color: #669999 !important; /*VERDE-BOOKA*/
+}
+
+/* Pastillas de cabecera para cuadros centrales y laterales
+* en los h2, cuadro de todo el ancho: color de fondo azul degradado, letras blancas
+* en los h3, columnas estrechas: el color de fondo es beige oscuro degradado, letras grises
+*/
+/* fondo titulo cuadro central 
+* ya no es violeta
+h2.htitle {
+    background-color: rgb(105, 105, 165);
+    background: linear-gradient(90deg, rgb(70, 71, 117) 25%, rgb(105, 105, 165) 55%);
+    background: -moz-linear-gradient(90deg, rgb(70, 71, 117) 25%, rgb(105, 105, 165) 55%);
+    background: -webkit-linear-gradient(90deg, rgb(70, 71, 117) 25%, rgb(105, 105, 165) 55%);
+    background: -o-linear-gradient(90deg, rgb(70, 71, 117) 25%, rgb(105, 105, 165) 55%);
+    background: -ms-linear-gradient(90deg, rgb(70, 71, 117) 25%, rgb(105, 105, 165) 55%);
+}
+
+h2.htitle,
+
+*/
+
+.ct0 {
+    color: white;
+}
+
+h2.htitle span,
+div.three-cols div.field-block.action a:hover,
+div#footer div.block ul li a:hover {
+    color: #90C0F0 !important;
+}
+
+ul#top-mybooka li a.top-mybooka-myname:hover {
+    color: #339999 !important;
+}
+
+/* fondo titulo columna estrecha */
+h2.htitle,
+h3.htitle {
+    background-color: rgb(228, 224, 205);
+    background: linear-gradient(90deg, rgb(228, 224, 205) 25%, rgb(247, 245, 233) 55%);
+    background: -moz-linear-gradient(90deg, rgb(228, 224, 205) 25%, rgb(247, 245, 233) 55%);
+    background: -webkit-linear-gradient(90deg, rgb(228, 224, 205) 25%, rgb(247, 245, 233) 55%);
+    background: -o-linear-gradient(90deg, rgb(228, 224, 205) 25%, rgb(247, 245, 233) 55%);
+    background: -ms-linear-gradient(90deg, rgb(228, 224, 205) 25%, rgb(247, 245, 233) 55%);
+}
+
+h2.htitle,
+h3.htitle {
+    color: #958D7E;
+    
+}
+
+h4.htitle {
+    color: white !important;
+    text-shadow: -1px -1px 0px rgba(0, 0, 0, 0.3); 
+}
+/* fin de los titulos de pastilla */
+
+ul.top-menu li a,
+a.next,
+div.three-cols lu#sign-in-with li a,
+ul#top-mybooka li a,
+div.superform label,
+div.superform blockquote,
+.ct2 {
+    color: #9F9E88;
+}
+
+h1 a span,
+h1 a:hover span {
+    color: #9F9E88 !important;
+}
+
+h3.htitle,
+ul.top-menu li a,
+a.next,
+.ct2,
+.wshadow {
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 1); 
+}
+
+
+ul.top-menu li a:hover,
+ul#top-mybooka li a:hover {
+    color: #8C8471;
+}
+
+h1 a,
+a.plus-info,
+a.button, a.button:hover,
+button, button:hover,
+input[type="submit"], input[type="submit"]:hover,
+div.field-block-conditions.active label,
+div.field-block-conditions.active label a,
+body.admin a {
+    color: #333366;
+}
+
+.ct3 {
+    color: #333366 !important;
+}
+
+/* pag accede */
+div.field-block-conditions label,
+div.field-block-conditions label a {
+    color: #C2BBAB;
+}
+
+div.field-block em,
+.rojo {
+    color: #670817; /*rojo oscuro*/
+}
+
+.ct4 {
+    color: #D1D1D1;
+}
+
+.ct5 {
+    color: #336797;
+}
+
+div#footer div.block h8,
+div#sub-footer ul li,
+div#sub-footer ul li a {
+    color: #D4D1BB;
+}
+
+/* dando estilos al placeholder */
+::-webkit-input-placeholder {
+    color: #CCC !important;
+}
+:-moz-placeholder {
+    color: #CCC !important;
+}
+:-ms-placeholder {
+    color: #CCC !important;
+}

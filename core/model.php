@@ -18,10 +18,9 @@
  *
  */
 
+namespace Base\Core {
 
-namespace Goteo\Core {
-
-	use Goteo\Core\Error;
+	use Base\Core\Error;
 
     abstract class Model {
 
@@ -44,7 +43,7 @@ namespace Goteo\Core {
          * @param   type mixed  $id     Identificador
          * @return  type object         Objeto
          */
-        abstract static public function get ($id);
+//        abstract static public function get ($id);
 
         /**
 		 * Guardar.
@@ -138,7 +137,7 @@ namespace Goteo\Core {
                 'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ü'=>'u', 'ý'=>'y', 'ý'=>'y',
                 'þ'=>'b', 'ÿ'=>'y', 'Ŕ'=>'R', 'ŕ'=>'r', 'ª' => 'a', 'º' => 'o',
                 '!' => '', '¡' => '', '?' => '', '¿' => '', '@' => '', '^' => '', '|' => '', '#' => '', '~' => '',
-                '%' => '', '$' => '', '*' => '', '+' => '', '-' => '', '`' => ''
+                '%' => '', '$' => '', '*' => '', '+' => '', '-' => '', '`' => '', '´' => ''
             );
 
             $id = strtr($id, $table);

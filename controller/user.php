@@ -18,19 +18,18 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+	use Base\Core\Redirection,
+        Base\Core\Error,
+        Base\Core\View,
+		Base\Model,
+        Base\Library\Text,
+        Base\Library\Feed,
+        Base\Library\Page,
+        Base\Library\Advice;
 
-	use Goteo\Core\Redirection,
-        Goteo\Core\Error,
-        Goteo\Core\View,
-		Goteo\Model,
-        Goteo\Library\Feed,
-        Goteo\Library\Text,
-        Goteo\Library\Message,
-        Goteo\Library\Listing;
-
-	class User extends \Goteo\Core\Controller {
+	class User extends \Base\Core\Controller {
 
 	    /**
 	     * Atajo al perfil de usuario.
@@ -38,6 +37,11 @@ namespace Goteo\Controller {
 	     */
 		public function index ($id, $show = '') {
 		    throw new Redirection('/user/profile/' .  $id . '/' . $show, Redirection::PERMANENT);
+		}
+
+		public function raw ($id) {
+            $user = Model\User::get($id);
+            die(trace($user));
 		}
 
         /**
@@ -49,27 +53,38 @@ namespace Goteo\Controller {
          */
         public function login () {
 
+            $page = Page::get('login');
+            
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['login'])) {
-                $username = \strtolower($_POST['username']);
+                $userid = \strtolower($_POST['userid']);
                 $password = $_POST['password'];
-                if (false !== ($user = (\Goteo\Model\User::login($username, $password)))) {
+                if (false !== ($user = (\Base\Model\User::login($userid, $password)))) {
                     $_SESSION['user'] = $user;
+                    if (!empty($user->lang)) {
+                        $_SESSION['lang'] = $user->lang;
+                    }
+                    unset($_SESSION['admin_menu']);
                     if (!empty($_POST['return'])) {
                         throw new Redirection($_POST['return']);
                     } elseif (!empty($_SESSION['jumpto'])) {
                         $jumpto = $_SESSION['jumpto'];
                         unset($_SESSION['jumpto']);
                         throw new Redirection($jumpto);
+                    } elseif (isset($user->roles['admin']) || isset($user->roles['superadmin'])) {
+                        throw new Redirection('/admin');
                     } else {
                         throw new Redirection('/dashboard');
                     }
                 }
                 else {
-                    Message::Error(Text::get('login-fail'));
+                    Advice::Error(Text::get('login-fail'));
                 }
             }
 
-            return new View ('view/user/login.html.php');
+            return new View ('view/user/login.html.php', array(
+                'text' => $page->text,
+                'content' => $page->content
+            ));
 
         }
 
@@ -77,23 +92,31 @@ namespace Goteo\Controller {
          * Cerrar sesión.
          */
         public function logout() {
-            if (isset($_COOKIE[session_name()])) {
-                setcookie(session_name(), '', time()-42000, '/');
-            }
+            $lang = '?lang='.$_SESSION['lang'];
+            session_start();
+            session_unset();
             session_destroy();
-            throw new Redirection('/');
+            session_write_close();
+            session_regenerate_id(true);
+            throw new Redirection('/'.$lang);
             die;
         }
         /**
          * Registro de usuario.
          */
         public function register () {
+            $page = Page::get('login');
+            
             if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 foreach ($_POST as $key=>$value) {
                     $_POST[$key] = trim($value);
                 }
 
+                if ($_POST['confirm'] != 'true') {
+                    Advice::Error(Text::get('user-register-must_accept'));
+                }
+                
             	$errors = array();
 
 				if (strcmp($_POST['email'], $_POST['remail']) !== 0) {
@@ -113,20 +136,22 @@ namespace Goteo\Controller {
 				$user->save($errors);
 
 				if(empty($errors)) {
-				  Message::Info(Text::get('user-register-success'));
-				  Message::Info('Tus datos de acceso son Usuario: <strong>'.$user->id.'</strong> Contraseña: <strong>'.$_POST['password'].'</strong>');
+				  Advice::Info(Text::get('user-register-success'));
+				  Advice::Info(Text::html('user-register-access_data', $user->id, $user->password));
                   
                   throw new Redirection('/user/login');
 				} else {
 					foreach ($errors as $field=>$text) {
-						Message::Error($text);
+						Advice::Error($text);
 					}
 				}
 			}
 			return new View (
 				'view/user/login.html.php',
 				array(
-					'errors' => $errors
+					'text' => $page->text,
+					'content' => $page->content,
+                    'errors' => $errors
 				)
 			);
         }
@@ -135,122 +160,146 @@ namespace Goteo\Controller {
 		 * Registro de usuario desde oauth
 		 */
 		public function oauth_register() {
-            if (\GOTEO_FREE) {
-                return false;
-            }
+
+			//comprovar si venimos de un registro via oauth
+			if($_POST['provider']) {
+
+				require_once OAUTH_LIBS;
+
+				$provider = $_POST['provider'];
+
+				$oauth = new \SocialAuth($provider);
+				//importar els tokens obtinguts anteriorment via POST
+				if($_POST['tokens'][$oauth->provider]['token']) $oauth->tokens[$oauth->provider]['token'] = $_POST['tokens'][$oauth->provider]['token'];
+				if($_POST['tokens'][$oauth->provider]['secret']) $oauth->tokens[$oauth->provider]['secret'] =$_POST['tokens'][$oauth->provider]['secret'];
+				//print_r($_POST['tokens']);print_R($oauth->tokens[$oauth->provider]);die;
+				$user = new Model\User();
+				$user->userid = $_POST['userid'];
+				$user->email = $_POST['email'];
+                $user->active = true;
+
+				//resta de dades
+				foreach($oauth->user_data as $k => $v) {
+					if($_POST[$k]) {
+						$oauth->user_data[$k] = $_POST[$k];
+						if(in_array($k,$oauth->import_user_data)) $user->$k = $_POST[$k];
+					}
+				}
+				//si no existe nombre, nos lo inventamos a partir del userid
+				if(trim($user->name)=='') $user->name = ucfirst($user->userid);
+
+				//print_R($user);print_r($oauth);die;
+				//no hará falta comprovar la contraseña ni el estado del usuario
+				$skip_validations = array('password','active');
+
+				//si el email proviene del proveedor de oauth, podemos confiar en el y lo activamos por defecto
+				if($_POST['provider_email'] == $user->email) {
+					$user->confirmed = 1;
+				}
+				//comprovamos si ya existe el usuario
+				//en caso de que si, se comprovará que el password sea correcto
+				$query = Model\User::query('SELECT id,password,active FROM user WHERE email = ?', array($user->email));
+				if($u = $query->fetchObject()) {
+					if ($u->password == sha1($_POST['password'])) {
+						//ok, login e importar datos
+						//y fuerza que pueda logear en caso de que no esté activo
+						if(!$oauth->bookaLogin(true)) {
+							//si no: registrar errores
+							Advice::Error(Text::get($oauth->last_error));
+						}
+					}
+					else {
+						Advice::Error(Text::get('oauth-user-password-exists'));
+                        throw new Redirection('/user/login');
+                    }
+				}
+				elseif($user->save($errors,$skip_validations)) {
+					//si el usuario se ha creado correctamente, login e importacion de datos
+					//y fuerza que pueda logear en caso de que no esté activo
+					if(!$oauth->bookaLogin(true)) {
+						//si no: registrar errores
+						Advice::Error(Text::get($oauth->last_error));
+					}
+				}
+				elseif($errors) {
+					foreach($errors as $err => $val) {
+						if($err!='email' && $err!='userid') Advice::Error($val);
+					}
+				}
+			}
+            
+            $page = Page::get('confirm');
+			return new View (
+				'view/user/confirm.html.php',
+				array(
+                    'text' => $page->text,
+                    'content' => $page->content,
+					'oauth' => $oauth
+				)
+			);
 		}
         /**
          * Registro de usuario a traves de Oauth (libreria HybridOauth, openid, facebook, twitter, etc).
          */
         public function oauth () {
-            if (\GOTEO_FREE) {
-                return false;
-            }
-        }
-         /**
-         * Modificación perfil de usuario.
-         * Metodo Obsoleto porque esto lo hacen en el dashboard
-         */
-        public function edit () {
-            $user = $_SESSION['user'];
 
-			if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+			require_once OAUTH_LIBS;
 
-			    $errors = array();
-                // E-mail
-                if($_POST['change_email']) {
-                    if(empty($_POST['user_nemail'])) {
-                        $errors['email'] = Text::get('error-user-email-empty');
-                    }
-                    elseif(!\Goteo\Library\Check::mail($_POST['user_nemail'])) {
-                        $errors['email'] = Text::get('error-user-email-invalid');
-                    }
-                    elseif(empty($_POST['user_remail'])) {
-                        $errors['email']['retry'] = Text::get('error-user-email-empty');
-                    }
-                    elseif (strcmp($_POST['user_nemail'], $_POST['user_remail']) !== 0) {
-                        $errors['email']['retry'] = Text::get('error-user-email-confirm');
-                    }
-                    else {
-                        $user->email = $_POST['user_nemail'];
-                    }
-                }
-                // Contraseña
-                if($_POST['change_password']) {
-                    /*
-                     * Quitamos esta verificacion porque los usuarios que acceden mediante servicio no tienen contraseña
-                     *
-                    if(empty($_POST['user_password'])) {
-                        $errors['password'] = Text::get('error-user-password-empty');
-                    }
-                    else
-                    */
-                    if(!Model\User::login($user->id, $_POST['user_password'])) {
-                        $errors['password'] = Text::get('error-user-wrong-password');
-                    }
-                    elseif(empty($_POST['user_npassword'])) {
-                        $errors['password']['new'] = Text::get('error-user-password-empty');
-                    }
-                    elseif(!\Goteo\Library\Check::password($_POST['user_npassword'])) {
-                        $errors['password']['new'] = Text::get('error-user-password-invalid');
-                    }
-                    elseif(empty($_POST['user_rpassword'])) {
-                        $errors['password']['retry'] = Text::get('error-user-password-empty');
-                    }
-                    elseif(strcmp($_POST['user_npassword'], $_POST['user_rpassword']) !== 0) {
-                        $errors['password']['retry'] = Text::get('error-user-password-confirm');
-                    }
-                    else {
-                        $user->password = $_POST['user_npassword'];
-                    }
-                }
-                // Avatar
-                if(!empty($_FILES['user_avatar']['name'])) {
-                    $user->avatar = $_FILES['user_avatar'];
-                }
+			if( isset( $_GET["provider"] ) && $_GET["provider"] ) {
 
-                // tratar si quitan la imagen
-                if (!empty($_POST['avatar-' . $user->avatar->id .  '-remove'])) {
-                    $user->avatar->remove('user');
-                    $user->avatar = '';
-                }
+				$oauth = new \SocialAuth($_GET["provider"]);
+				if(!$oauth->authenticate()) {
+					//si falla: error, si no siempre se redirige al proveedor
+					Advice::Error(Text::get($oauth->last_error));
+				}
 
-                // Perfil público
-                $user->name = $_POST['user_name'];
-                $user->about = $_POST['user_about'];
-                $user->keywords = $_POST['user_keywords'];
-                $user->contribution = $_POST['user_contribution'];
-                $user->twitter = $_POST['user_twitter'];
-                $user->facebook = $_POST['user_facebook'];
-                $user->linkedin = $_POST['user_linkedin'];
-                // Intereses
-                $user->interests = $_POST['user_interests'];
-                // Páginas Web
-                if(!empty($_POST['user_webs']['remove'])) {
-                    $user->webs = array('remove' => $_POST['user_webs']['remove']);
-                }
-                elseif(!empty($_POST['user_webs']['add']) && !empty($_POST['user_webs']['add'][0]) ) {
-                    $user->webs = array('add' => $_POST['user_webs']['add']);
-                }
-                else {
-                    $user->webs = array('edit', $_POST['user_webs']['edit']);
-                }
-                if($user->save($errors)) {
-                    // Refresca la sesión.
-                    $user = Model\User::flush();
-                    if (isset($_POST['save'])) {
-                        throw new Redirection('/dashboard');
-                    } else {
-                        throw new Redirection('/user/edit');
-                    }
-                }
+
 			}
 
+			//return from provider authentication
+			if( isset( $_GET["return"] ) && $_GET["return"] ) {
+
+				//check twitter activation
+				$oauth = new \SocialAuth($_GET["return"]);
+
+				if($oauth->login()) {
+					//si ok: redireccion de login!
+//					Advice::Info("USER INFO:\n".print_r($oauth->user_data,1));
+					//si es posible, login (redirecciona a user/dashboard o a user/confirm)
+					//y fuerza que pueda logear en caso de que no esté activo
+					if(!$oauth->bookaLogin()) {
+						//si falla: error o formulario de confirmación
+						if($oauth->last_error == 'oauth-user-not-exists') {
+                            $page = Page::get('confirm_account');
+                            
+							return new View (
+								'view/user/confirm.html.php',
+								array(
+									'oauth' => $oauth,
+                                    'text' => $page->text,
+                                    'content' => $page->content
+								)
+							);
+						}
+						elseif($oauth->last_error == 'oauth-user-password-exists') {
+                            Advice::Error(Text::get('oauth-user-password-exists'));
+                            throw new Redirection('/user/login');
+						}
+						else Advice::Error(Text::get($oauth->last_error));
+					}
+				}
+				else {
+					//si falla: error
+					Advice::Error(Text::get($oauth->last_error));
+				}
+			}
+
+            $page = Page::get('login');
             return new View (
-                'view/user/edit.html.php',
+                'view/user/login.html.php',
                 array(
-                    'user' => $user,
-                    'errors' => $errors
+                    'text' => $page->text,
+                    'content' => $page->content
                 )
             );
         }
@@ -260,108 +309,67 @@ namespace Goteo\Controller {
          *
          * @param string $id    Nombre de usuario
          */
-        public function profile ($id, $show = 'profile', $category = null) {
+        public function profile ($id, $show = 'profile') {
 
-            if (!in_array($show, array('profile', 'investors', 'sharemates', 'message'))) {
+            if (!in_array($show, array('profile', 'message', 'shelves', 'proposal'))) {
                 $show = 'profile';
             }
 
-            $user = Model\User::get($id, LANG);
-
-            if (!$user instanceof Model\User || $user->hide) {
-                throw new Redirection('/', Redirection::PERMANENT);
+            $user = Model\User::get($id);
+            
+            if (!$user instanceof Model\User || ($user->hide && $_SESSION['user']->id != $id)) {
+                throw new Redirection('/');
             }
 
+            // arreglando los datos de usuario para pintar
+            $user->about = nl2br(Text::urlink($user->about));
+            
+            // añadimos las palabras clave a los intereses
+            // pero no cabe
+            /*
+            if (!empty($user->keywords))
+                $user->interests[] = $user->keywords;
+             * 
+             */
+            
+            // montamos localidad, ciudad, pais segun lo que tenga
+            $address = Model\User::getPersonal($id);
+            $user->location = array();
+            if (!empty($address->location))
+                $user->location[] = $address->location;
+            if (!empty($address->city))
+                $user->location[] = $address->city;
+            if (!empty($address->country))
+                $user->location[] = $address->country;
+            
+            // arreglamos la url
+            $user->fullweb = (substr($user->web, 0, strlen('http')) != 'http' ) ? 'http://'.$user->web : $user->web;
+
+            $supports = $user->support;
+            $user->num_bookas = (int) $supports['bookas'];
+            if ($user->num_bookas > 0 && $user->level == 0) {
+                $user->level = 1;
+                $user->setLevel(1);
+            }
             //--- para usuarios públicos---
             if (empty($_SESSION['user'])) {
-                // la subpágina de mensaje también está restringida
-                if ($show == 'message') {
-                    $_SESSION['jumpto'] = '/user/profile/' .  $id . '/message';
-                    Message::Info(Text::get('user-login-required-to_message'));
-                    throw new Redirection("/user/login");
-                }
-
-
-                // a menos que este perfil sea de un impulsor, no pueden verlo
-//                $owners = Model\User::getOwners() ;
-//                if (!isset($owners[$id])) {
-                    $_SESSION['jumpto'] = '/user/profile/' .  $id . '/' . $show;
-                    Message::Info(Text::get('user-login-required-to_see'));
-                    throw new Redirection("/user/login");
-//                }
-
-                /*
-                // subpágina de cofinanciadores
-                if ($show == 'investors') {
-                    Message::Info(Text::get('user-login-required-to_see-supporters'));
-                    throw new Redirection('/user/profile/' .  $id);
-                }
-                */
-
+                // necesita cierto nivel para poder ver los eprfiles de la gente
+                $_SESSION['jumpto'] = '/user/profile/' .  $id . '/' . $show;
+                Advice::Info(Text::get('user-login-required-to_see'));
+                throw new Redirection("/user/login");
             }
             //--- el resto pueden seguir ---
 
             $viewData = array();
             $viewData['user'] = $user;
+            $viewData['show'] = $show;
 
-            $projects = Model\Project::ofmine($id, true);
-
-            //mis cofinanciadores
-            // array de usuarios con:
-            //  foto, nombre, nivel, cantidad a mis proyectos, fecha ultimo aporte, nº proyectos que cofinancia
-            $investors = array();
-            foreach ($projects as $kay=>$project) {
-
-                // quitamos los caducados
-                if ($project->status == 0) {
-                    unset ($projects[$kay]);
-                    continue;
-                }
-
-                foreach (Model\Invest::investors($project->id) as $key=>$investor) {
-                    if (\array_key_exists($investor->user, $investors)) {
-                        // ya está en el array, quiere decir que cofinancia este otro proyecto
-                        // , añadir uno, sumar su aporte, actualizar la fecha
-                        ++$investors[$investor->user]->projects;
-                        $investors[$investor->user]->amount += $investor->amount;
-                        $investors[$investor->user]->date = $investor->date;
-                    } else {
-                        $investors[$investor->user] = (object) array(
-                            'user' => $investor->user,
-                            'name' => $investor->name,
-                            'projects' => 1,
-                            'avatar' => $investor->avatar,
-                            'worth' => $investor->worth,
-                            'amount' => $investor->amount,
-                            'date' => $investor->date
-                        );
-                    }
-                }
+            if ($show == 'profile') {
+                // Bookas impulsados
+                $viewData['invest_on'] = Model\User::invested($id, true);
             }
-
-            $viewData['investors'] = $investors;
-
-            // comparten intereses
-            $viewData['shares'] = Model\User\Interest::share($id, $category);
-            if ($show == 'sharemates' && empty($viewData['shares'])) {
-                $show = 'profile';
-            }
-
-            if (!empty($category)) {
-                $viewData['category'] = $category;
-            }
-
-            // proyectos que cofinancio
-            $invested = Model\User::invested($id, true);
-
-            // agrupacion de proyectos que cofinancia y proyectos suyos
-            $viewData['lists'] = array();
-            if (!empty($invested)) {
-                $viewData['lists']['invest_on'] = Listing::get($invested, 2);
-            }
-            if (!empty($projects)) {
-                $viewData['lists']['my_projects'] = Listing::get($projects, 2);
-            }
+            
+            if ($show == 'message') $show = 'profile';
 
             return new View ('view/user/'.$show.'.html.php', $viewData);
         }
@@ -379,39 +387,27 @@ namespace Goteo\Controller {
                     $user->confirmed = true;
                     $user->active = true;
                     if($user->save($errors)) {
-                        Message::Info(Text::get('user-activate-success'));
+                        Advice::Info(Text::get('user-activate-success'));
                         $_SESSION['user'] = $user;
 
-                        /*
-                         * Evento Feed
-                         */
+                        // Evento Feed
                         $log = new Feed();
-                        $log->title = 'nuevo usuario registrado (confirmado)';
-                        $log->url = '/admin/users';
-                        $log->type = 'user';
-                        $log->html = Text::html('feed-new_user', Feed::item('user', $user->name, $user->id));
-                        $log->add($errors);
-
-                        // evento público
-                        $log->title = $user->name;
-                        $log->url = null;
-                        $log->scope = 'public';
-                        $log->type = 'community';
-                        $log->add($errors);
-
+                        $log->setTarget($user->id, 'user');
+                        $log->populate($user->name, '/user/profile/'.$user->id, Text::html('feed-new_user'), 1);
+                        $log->doPublic('users');
                         unset($log);
 
                     }
                     else {
-                        Message::Error($errors);
+                        Advice::Error($errors);
                     }
                 }
                 else {
-                    Message::Info(Text::get('user-activate-already-active'));
+                    Advice::Info(Text::get('user-activate-already-active'));
                 }
             }
             else {
-                Message::Error(Text::get('user-activate-fail'));
+                Advice::Error(Text::get('user-activate-fail'));
             }
             throw new Redirection('/dashboard');
         }
@@ -427,24 +423,26 @@ namespace Goteo\Controller {
                 $query = Model\User::query('SELECT id FROM user WHERE token = ?', array($token));
                 if($id = $query->fetchColumn()) {
                     $user = Model\User::get($id);
+                    $old_email = $user->email;
                     $user->email = $token;
                     $errors = array();
                     if($user->save($errors)) {
-                        Message::Info(Text::get('user-changeemail-success'));
+                        Advice::Info(Text::get('user-changeemail-success'));
 
                         // Refresca la sesión.
                         Model\User::flush();
                     }
                     else {
-                        Message::Error($errors);
+                        Advice::Error($errors);
+                        throw new Redirection('/contact?action=email&email='.$old_email);
                     }
                 }
                 else {
-                    Message::Error(Text::get('user-changeemail-fail'));
+                    Advice::Error(Text::get('user-changeemail-fail'));
                 }
             }
             else {
-                Message::Error(Text::get('user-changeemail-fail'));
+                Advice::Error(Text::get('user-changeemail-fail'));
             }
             throw new Redirection('/dashboard');
         }
@@ -475,32 +473,36 @@ namespace Goteo\Controller {
                             $user = Model\User::get($id);
                             $_SESSION['user'] = $user;
                             $_SESSION['recovering'] = $user->id;
-                            throw new Redirection('/dashboard/profile/access/recover#password');
+                            throw new Redirection('/dashboard/preferences#password');
                         }
                     }
                 }
 
-                $error = Text::get('recover-token-incorrect');
+                Advice::Error(Text::get('recover-token-incorrect'));
             }
 
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['recover'])) {
                 $username = $_POST['username'];
                 $email    = $_POST['email'];
                 if ((!empty($username) || !empty($email)) && Model\User::recover($username, $email)) {
-                    $message = Text::get('recover-email-sended');
+                    Advice::Info(Text::get('recover-email-sended'));
                     unset($_POST['username']);
                     unset($_POST['email']);
                 }
-                else {
-                    $error = Text::get('recover-request-fail');
+                elseif (!empty($email)) {
+                    Advice::Error(Text::get('recover-request-fail'));
+                    throw new Redirection('/contact?action=password&email='.$email);
+                } else {
+                    Advice::Error(Text::get('recover-request-fail'));
                 }
             }
 
+            $page = Page::get('recover');
             return new View (
                 'view/user/recover.html.php',
                 array(
-                    'error'   => $error,
-                    'message' => $message
+                    'text'   => $page->text,
+                    'content' => $page->content
                 )
             );
 
@@ -529,11 +531,11 @@ namespace Goteo\Controller {
                         if(!empty($id)) {
                             // el token coincide con el email y he obtenido una id
                             if (Model\User::cancel($id)) {
-                                Message::Info(Text::get('leave-process-completed'));
+                                Advice::Info(Text::get('leave-process-completed'));
                                 throw new Redirection('/user/login');
                             } else {
-                                Message::Error(Text::get('leave-process-fail'));
-                                throw new Redirection('/user/login');
+                                Advice::Error(Text::get('leave-process-fail'));
+                                throw new Redirection('/contact?action=leave&email='.$parts[1]);
                             }
                         }
                     }
@@ -544,20 +546,21 @@ namespace Goteo\Controller {
 
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['leaving'])) {
                 if (Model\User::leaving($_POST['email'], $_POST['reason'])) {
-                    $message = Text::get('leave-email-sended');
+                    Advice::Info(Text::get('leave-email-sended'));
                     unset($_POST['email']);
                     unset($_POST['reason']);
                 }
                 else {
-                    $error = Text::get('leave-request-fail');
+                    Advice::Error(Text::get('leave-request-fail'));
                 }
             }
 
+            $page = Page::get('leave');
             return new View (
                 'view/user/leave.html.php',
                 array(
-                    'error'   => $error,
-                    'message' => $message
+                    'text'   => $page->text,
+                    'content' => $page->content
                 )
             );
 

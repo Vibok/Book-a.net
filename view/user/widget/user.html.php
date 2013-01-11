@@ -18,15 +18,14 @@
  *
  */
 
-
-use Goteo\Library\Text;
+use Base\Library\Text;
 
 $user = $this['user'];
 $level = (int) $this['level'] ?: 3;
 
 // @todo Esto ya debería venirme en $user
 if (!isset($user->webs)) {
-    $user->webs = \Goteo\Model\User\Web::get($user->id);
+    $user->webs = \Base\Model\User\Web::get($user->id);
 }
 
 $user->about = nl2br(Text::urlink($user->about));

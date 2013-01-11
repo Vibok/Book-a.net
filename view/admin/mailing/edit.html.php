@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,14 +18,14 @@
  *
  */
 
-
-use Goteo\Library\Text,
-    Goteo\Library\Template;
+use Base\Library\Text,
+    Base\Library\Template;
 
 //$templates = Template::getAllMini();
 $templates = array(
     '11' => 'Base',
-    '27' => 'Aviso a los talleristas'
+    '27' => 'Aviso a los talleristas',
+    '33' => 'Boletin'
 );
 // lista de destinatarios segun filtros recibidos, todos marcados por defecto
 ?>
@@ -56,15 +56,16 @@ jQuery(document).ready(function ($) {
         <li><strong>%USERNAME%</strong> Para el nombre del destinatario</li>
         <li><strong>%SITEURL%</strong> Para la url de esta plataforma (<?php echo SITE_URL ?>)</li>
         <?php if ($this['filters']['type'] == 'owner' || $this['filters']['type'] == 'investor') : ?>
-            <li><strong>%PROJECTID%</strong> Para el id del proyecto</li>
-            <li><strong>%PROJECTNAME%</strong> Para el nombre del proyecto</li>
-            <li><strong>%PROJECTURL%</strong> Para la url del proyecto</li>
+            <li><strong>%PROJECTID%</strong> Para el id del booka</li>
+            <li><strong>%PROJECTNAME%</strong> Para el nombre del booka</li>
+            <li><strong>%PROJECTURL%</strong> Para la url del booka</li>
         <?php endif; ?>
     </ul>
 </div>
 <div class="widget">
     <p><?php echo 'Vamos a comunicarnos con ' . $_SESSION['mailing']['filters_txt']; ?></p>
-    <form action="/admin/mailing/send" method="post">
+    <p>Son <?php echo count($_SESSION['mailing']['receivers']) ?> destinatarios.</p>
+    <form action="/admin/mailing/send" method="post" enctype="multipart/form-data">
     <dl>
         <dt>Seleccionar plantilla:</dt>
         <dd>
@@ -100,7 +101,7 @@ jQuery(document).ready(function ($) {
                            id="receiver_<?php echo $usr->id; ?>"
                            value="1"
                            checked="checked" />
-                    <label for="receiver_<?php echo $usr->id; ?>"><?php echo $usr->name.' ['.$usr->email.']'; if (!empty($usr->project)) echo ' Proyecto: <strong>'.$usr->project.'</strong>'; ?></label>
+                    <label for="receiver_<?php echo $usr->id; ?>"><?php echo $usr->name.' ['.$usr->email.']'; if (!empty($usr->booka)) echo ' Booka: <strong>'.$usr->booka.'</strong>'; ?></label>
                 </li>
                 <?php endforeach; ?>
             </ul>

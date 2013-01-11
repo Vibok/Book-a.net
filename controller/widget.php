@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,28 +18,26 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+    use Base\Core\View,
+        Base\Model\Booka,
+        Base\Core\Redirection,
+        Base\Core\Error;
 
-    use Goteo\Core\View,
-        Goteo\Model\Project,
-        Goteo\Core\Redirection;
-
-    class Widget extends \Goteo\Core\Controller {
+    class Widget extends \Base\Core\Controller {
         
-        public function project ($id) {
+        public function booka ($id) {
 
-            $project  = Project::get($id, LANG);
+            $booka  = Booka::getMedium($id);
 
-            if (! $project instanceof  Project) {
+            if (! $booka instanceof  Booka) {
                 throw new Redirection('/', Redirection::TEMPORARY);
             }
 
-            return new View('view/widget/project.html.php', array('project' => $project, 'global' => true));
-            
-            throw new Redirection('/fail', Redirection::TEMPORARY);
+            return new View('view/widget/booka.html.php', array('booka' => $booka, 'global' => true));
         }
-        
+
     }
     
 }

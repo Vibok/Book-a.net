@@ -18,11 +18,10 @@
  *
  */
 
+namespace Base\Library {
 
-namespace Goteo\Library {
-
-	use Goteo\Core\Model,
-        Goteo\Core\Exception;
+	use Base\Core\Model,
+        Base\Core\Exception;
 	/*
 	 * Clase para sacar textos dinámicos de la tabla text
      *  @TODO, definir donde se define y se cambia la constante LANG y utilizarla en los _::get_
@@ -31,11 +30,10 @@ namespace Goteo\Library {
 
         public
             $id,
-            $lang,
-            $text,
-            $purpose,
-            $html,
-            $pendiente; // no traducido
+            $text_es,
+            $text_en,
+            $group,
+            $html;
 
         /*
          * Devuelve un texto en HTML
@@ -54,58 +52,16 @@ namespace Goteo\Library {
          */
         static public function plain ($id) {
             // sacamos el contenido del texto
-            $text = call_user_func_array ( 'Text::get' , \func_get_args() );
+            $text = call_user_func_array ( 'static::get' , \func_get_args() );
             if (self::isHtml($id))
                 return \strip_tags($text) ; // ES html, le quitamos los tags
             else
                 return $text;
         }
 
-        static public function getAdmin ($id) {
-
-            //$lang = 'es';
-
-			// buscamos el texto en la tabla, si no está sacamos el propósito
-            $values = array(':id'=>$id, ':lang' => LANG);
-
-            $sql = "SELECT
-                        IFNULL(text.text,purpose.purpose) as `text`
-                    FROM purpose
-                    LEFT JOIN text
-                        ON text.id = purpose.text
-                        AND text.lang = :lang
-                    WHERE text.id = :id
-                    ";
-
-			$query = Model::query($sql, $values);
-            return $query->fetchObject()->text;
-		}
-
-        static public function getTrans ($id) {
-
-            $lang = $_SESSION['translator_lang'];
-
-			// buscamos el texto en la tabla, si no está sacamos el propósito
-            $values = array(':id'=>$id, ':lang' => $lang);
-
-            $sql = "SELECT
-                        IFNULL(text.text,purpose.purpose) as `text`
-                    FROM purpose
-                    LEFT JOIN text
-                        ON text.id = purpose.text
-                        AND text.lang = :lang
-                    WHERE text.id = :id
-                    ";
-
-			$query = Model::query($sql, $values);
-            return $query->fetchObject()->text;
-		}
-
         static public function get ($id) {
 
-            $lang = LANG;
-
-            if (\defined('GOTEO_ADMIN_NOCACHE')) {
+            if (\defined('CONF_ADMIN_NOCACHE')) {
                 $nocache = true;
             } else {
                 $nocache = false;
@@ -121,24 +77,21 @@ namespace Goteo\Library {
 
 			// buscamos el texto en cache
 			static $_cache = array();
-			if (!$nocache && isset($_cache[$id][$lang]) && empty($args)) {
-				return $_cache[$id][$lang];
+			if (!$nocache && isset($_cache[$id][\LANG]) && empty($args)) {
+				return $_cache[$id][\LANG];
             }
 
 			// buscamos el texto en la tabla
-            $values = array(':id'=>$id, ':lang' => $lang);
+            $values = array(':id'=>$id);
 
             $sql = "SELECT
-                        IFNULL(text.text,purpose.purpose) as `text`
-                    FROM purpose
-                    LEFT JOIN text
-                        ON text.id = purpose.text
-                        AND text.lang = :lang
-                    WHERE purpose.text = :id
+                        IFNULL(text.text_".\LANG.", text.text_es) as `text`
+                    FROM text
+                    WHERE text.id = :id
                     ";
 			$query = Model::query($sql, $values);
 			if ($exist = $query->fetchObject()) {
-                $tmptxt = $_cache[$id][$lang] = $exist->text;
+                $tmptxt = $_cache[$id][\LANG] = $exist->text;
 
                 //contamos cuantos argumentos necesita el texto
                 $req_args = \substr_count($exist->text, '%');
@@ -150,7 +103,8 @@ namespace Goteo\Library {
                 }
 
 			} else {
-                $texto = 'Texto: ' . $id;
+                $texto = '' . $id;
+                $texto = '*_*' . $id;  Model::query("REPLACE INTO text (id, text_es, `group`) VALUES (:id, :text, 'new')", array(':id' => $id, ':text' => $texto));
 			}
 
             $texto = nl2br($texto);
@@ -158,17 +112,22 @@ namespace Goteo\Library {
             return $texto;
 		}
 
-		static public function getPurpose ($id) {
-			// buscamos la explicación del texto en la tabla
-			$query = Model::query("SELECT purpose, html FROM purpose WHERE `text` = :id", array(':id' => $id));
-			$exist = $query->fetchObject();
-			if (!empty($exist->purpose)) {
-                return $exist->purpose;
-			} else {
-				Model::query("REPLACE INTO purpose (text, purpose) VALUES (:text, :purpose)", array(':text' => $id, ':purpose' => "Texto $id"));
-				return 'Texto: ' . $id;
-			}
-		}
+        /*
+         *  Devuelve todos los datos apra edicion
+         */
+        public static function getFull ($id) {
+                $query = Model::query("
+                    SELECT
+                        *
+                    FROM text
+                    WHERE text.id = :id
+                    ", array(':id' => $id));
+                $item = $query->fetchObject(__CLASS__);
+
+                return $item;
+        }
+
+
 
         /*
          * Si un texto esta marcado como html devuelve true, si no está marcado así, false
@@ -178,14 +137,14 @@ namespace Goteo\Library {
             try
             {
                 // lo miramos en la tabla de propósitos
-                $query = Model::query("SELECT html FROM purpose WHERE text = :id", array(':id' => $id));
+                $query = Model::query("SELECT html FROM text WHERE id = :id", array(':id' => $id));
                 $purpose = $query->fetchObject();
                 if ($purpose->html == 1)
                     return true;
                 else
                     return false;
             } catch (\PDOException $e) {
-                return false; // Si la tabla purpose no tiene el campo html
+                return false; // Si la tabla text no tiene el campo html
             }
 		}
 
@@ -193,35 +152,25 @@ namespace Goteo\Library {
 		/*
 		 *  Metodo para la lista de textos segun idioma
 		 */
-		public static function getAll($filters = array(), $lang = null) {
+		public static function getAll($filters = array()) {
             $texts = array();
 
-            $values = array(':lang' => $lang);
+            $values = array();
 
             $sql = "SELECT
-                        purpose.text as id,
-                        IFNULL(text.text,purpose.purpose) as text,
-                        IF(text.text IS NULL, 1, 0) as pendiente,
-                        purpose.`group` as `group`
-                    FROM purpose
-                    LEFT JOIN text
-                        ON text.id = purpose.text
-                        AND text.lang = :lang
-                    WHERE purpose.text != ''
+                        *
+                    FROM text
+                    WHERE id != ''
                     ";
-            if (!empty($filters['idfilter'])) {
-                $sql .= " AND purpose.text LIKE :idfilter";
-                $values[':idfilter'] = "%{$filters['idfilter']}%";
-            }
             if (!empty($filters['group'])) {
-                $sql .= " AND purpose.`group` = :group";
+                $sql .= " AND text.`group` = :group";
                 $values[':group'] = "{$filters['group']}";
             }
             if (!empty($filters['text'])) {
-                $sql .= " AND ( text.text LIKE :text OR (text.text IS NULL AND purpose.purpose LIKE :text ))";
+                $sql .= " AND ( text.text_es LIKE :text)";
                 $values[':text'] = "%{$filters['text']}%";
             }
-            $sql .= " ORDER BY pendiente DESC, text ASC";
+            $sql .= " ORDER BY text_es ASC";
             
             try {
                 $query = Model::query($sql, $values);
@@ -235,79 +184,29 @@ namespace Goteo\Library {
 		}
 
 		/*
-		 *  Esto se usa para traducciones
-		 */
+		 *  Esto se usa para gestión de textos
+         */
 		public static function save($data, &$errors = array()) {
 			if (!is_array($data) ||
 				empty($data['id']) ||
-				empty($data['text']) ||
-				empty($data['lang'])) {
+				empty($data['text_es'])) {
+                    $errors[] = 'Falta id o texto en eespañol';
 					return false;
 			}
 
-            $sql = "REPLACE `text` SET
-                            `text` = :text,
-                            id = :id,
-                            lang = :lang
+            $sql = "UPDATE `text` SET
+                            `text_es` = :text_es,
+                            `text_en` = :text_en,
+                            `group`   = :group
+                            WHERE `id` = :id
                     ";
-			if (Model::query($sql, array(':text' => $data['text'], ':id' => $data['id'], ':lang' => $data['lang']))) {
+			if (Model::query($sql, array(':text_es' => $data['text_es'], ':text_en' => $data['text_en'], ':id' => $data['id'], ':group' => $data['group']))) {
 				return true;
 			} else {
-				$errors[] = 'Error al insertar los datos <pre>' . print_r($data, 1) . '</pre>';
+				$errors[] = 'Error al insertar los datos ' . \trace($data);
 				return false;
 			}
 		}
-
-		/*
-		 *  Esto se usa para gestión de originales
-		 */
-		public static function update($data, &$errors = array()) {
-			if (!is_array($data) ||
-				empty($data['id']) ||
-				empty($data['text'])) {
-					return false;
-			}
-
-            $sql = "UPDATE `purpose` SET
-                            `purpose` = :text
-                            WHERE `text` = :id
-                    ";
-			if (Model::query($sql, array(':text' => $data['text'], ':id' => $data['id']))) {
-				return true;
-			} else {
-				$errors[] = 'Error al insertar los datos <pre>' . print_r($data, 1) . '</pre>';
-				return false;
-			}
-		}
-
-        /*
-         * Filtros de textos
-         */
-        static public function filters()
-        {
-            $filters = array(
-                'header'        => 'Cabeceras de página o sección',
-                'field'         => 'Campos y agrupaciones de campos',
-                'mandatory'     => 'Mensajes de campos obligatorios',
-                'tooltip'       => 'Consejos para rellenar el formulario',
-                'error'         => 'Errores que se muestran al usuario',
-                'explain'       => 'Explicaciones',
-                'guide'         => 'Textos de guia',
-                'step'          => 'Pasos del formulario',
-                'status'        => 'Estados de los proyectos',
-                'waitfot'       => 'Explicacion estados de los proyectos',
-                'validate'      => 'Validaciones de campos',
-                'regular'       => 'De uso común',
-                'button'        => 'Genéricos para botones',
-                'subject'       => 'Asuntos para emails automáticos',
-                'feed'          => 'Eventos',
-                'mark'          => 'Banderolos'
-            );
-
-            \asort($filters);
-
-            return $filters;
-        }
 
         /*
          * Grupos de textos
@@ -315,39 +214,29 @@ namespace Goteo\Library {
         static public function groups()
         {
             $groups = array(
-                'home' => 'Portada',
-                'public_profile' => 'Pagina de perfil de usuario',
-                'project'  => 'Proyecto, pública y formulario',
-                'form'     => 'Generales del formulario de proyecto',
-                'profile'  => 'Gestión de perfil del usuario',
-                'personal' => 'Datos personales del usuario',
-                'overview' => 'Descripción del proyecto',
-                'costs'    => 'Costes del proyecto',
-                'rewards'  => 'Retornos y recompensas del proyecto',
-                'supports' => 'Colaboraciones del proyecto',
-                'preview'  => 'Previsualización del proyecto',
-                'dashboard'=> 'Dashboard del usuario',
-                'register' => 'Registro de usuarios',
-                'login'    => 'Pagina de login',
-                'discover'  => 'Sección descubre proyectos',
-                'community'  => 'Sección comunidad',
-                'general'  => 'Propósito general',
-                'blog'  => 'Blog/Actualizaciones',
-                'faq'  => 'Pagina de FAQ',
-                'contact'  => 'Pagina de contacto',
-                'widget'  => 'Textos para etiquetas en el widget de un proyecto',
-                'invest'  => 'Pagina de aportar a un proyecto',
-                'types' => 'Tooltips para tipos de necesidades',
-                'banners' => 'Banners y cabeceras',
-                'footer' => 'Footer',
-                'social' => 'Cuentas de redes sociales',
-                'review' => 'Panel revisor',
-                'translate' => 'Panel traductor',
-                'menu' => 'Menu superior',
-                'feed' => 'Eventos recientes',
-                'mailer' => 'Emails automaticos',
-                'bluead' => 'Avisos azules',
-                'error' => 'Errores catastroficos'
+                'home'              => 'Portada',
+                'profile_public'    => 'Pagina de perfil de usuario',
+                'profile_form'      => 'Gestión de perfil del usuario',
+                'booka_public'      => 'Página pública de libro-semilla',
+                'booka_form'        => 'Formulario de edición de libro-semilla',
+                'dashboard'         => 'Dashboard del usuario',
+                'login'             => 'Pagina de acceso',
+                'general'           => 'Propósito general',
+                'collection'        => 'Páginas de colección',
+                'blog'              => 'Blog',
+                'faq'               => 'Pagina de FAQ',
+                'footer'            => 'Footer',
+                'about'             => 'Paginas institucionales',
+                'invest'            => 'Pagina de aportar a un proyecto',
+                'tooltips'          => 'Tooltips de formulario',
+                'footer'            => 'Footer',
+                'feed'              => 'Actividad reciente',
+                'social'            => 'Cuentas de redes sociales',
+                'menu'              => 'Menu',
+                'mailer'            => 'Emails automaticos',
+                'bluead'            => 'Avisos usuario',
+                'error'             => 'Errores',
+                'new'               => 'Sin clasificar'
             );
 
             \asort($groups);
@@ -356,66 +245,17 @@ namespace Goteo\Library {
         }
 
         /*
-         * Devuelve el número de palabras del contenido recibido
-         */
-        static public function wordCount ($section, $table, $fields = array(), &$total = 0 ) {
-
-            $count = 0;
-            $sqlFilter = '';
-
-            switch ($section) {
-                case 'texts':
-                    // todos son de la tabla purpose, $table nos indica la agrupación
-                    //  y hay que filtrar la columna group
-                    $sqlFilter = " WHERE `group` = '{$table}'";
-                    $table = 'purpose';
-                    $fields = array('purpose');
-                    break;
-                case 'pages':
-                    // table nos indica si es la de descripciones o la de contenido,
-                    //  en la de contenido hay que filtrar nodo goteo y español
-                    if ($table == 'page_node') {
-                        $sqlFilter = " WHERE node = 'goteo' AND lang = 'es'";
-                    }
-                    break;
-                case 'contents':
-                case 'home':
-                    // ojo! post es solo del blog 1 (goteo)
-                    if ($table == 'post') {
-                        $sqlFilter = " WHERE blog = '1'";
-                    }
-                    break;
-            }
-
-            // seleccionar toda la tabla,
-            $sql = "SELECT ".implode(', ', $fields)." FROM {$table}{$sqlFilter}";
-			$query = Model::query($sql, $values);
-            foreach ($query->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-                // para cada campo
-                foreach ($fields as $field) {
-                    // contar palabras (ojo! hay que quitar los tags html)
-                    $count += count(explode(' ', \strip_tags($row[$field])));
-                }
-            }
-
-            $total += $count;
-
-            return $count;
-        }
-
-
-        /*
          * Devuelve el código embed de un widget de proyecto
          */
-        static public function widget ($url, $type = 'project') {
+        static public function widget ($url, $type = 'booka') {
             
             switch ($type) {
                 case 'fb':
                     $code = '<div class="fb-like" data-href="'.$url.'" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false"></div>';
                     break;
-                case 'project':
+                case 'booka':
                 default:
-                    $code = '<iframe frameborder="0" height="480px" src="'.$url.'" width="250px" scrolling="no"></iframe>';
+                    $code = '<iframe frameborder="0" height="623px" src="'.$url.'" width="298px" scrolling="no"></iframe>';
                     break;
             }
 
@@ -439,7 +279,6 @@ namespace Goteo\Library {
 		{
 			$texto = trim(strtolower($texto));
 			// Acentos
-//			$texto = strtr($texto, "ÁÀÄÂáàâäÉÈËÊéèêëÍÌÏÎíìîïÓÒÖÔóòôöÚÙÛÜúùûüÇçÑñ", "aaaaaaaaeeeeeeeeiiiiiiiioooooooouuuuuuuuccnn");
             $table = array(
                 'Š'=>'S', 'š'=>'s', 'Đ'=>'Dj', 'đ'=>'dj', 'Ž'=>'Z', 'ž'=>'z', 'Č'=>'C', 'č'=>'c', 'Ć'=>'C', 'ć'=>'c',
                 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
@@ -496,9 +335,9 @@ namespace Goteo\Library {
 			if ($html && strrpos($texto,"<") > strrpos($texto,">")) {
 				$texto = substr($texto,0,strrpos($texto,"<"));
 			}
+			if ($puntos !== false) $texto .= $puntos;
 			// Si el texto era html, cerramos las etiquetas
 			if ($html) $texto = self::cerrar_etiquetas($texto);
-			if ($puntos !== false) $texto .= $puntos;
 			return $texto;
 		}
 
@@ -546,7 +385,7 @@ namespace Goteo\Library {
 		/*
 		 *   Método para aplicar saltos de linea y poner links en las url
          *   ¿¡Como se puede ser tan guay!?
-         *   http://www.kwi.dk/projects/php/UrlLinker/
+         *   http://www.kwi.dk/bookas/php/UrlLinker/
          * -------------------------------------------------------------------------------
          *  UrlLinker - facilitates turning plaintext URLs into HTML links.
          *
@@ -629,6 +468,68 @@ namespace Goteo\Library {
 
 		}
 
+        /* Codigo html para botonjes admin */
+        static public function adminBtn ($id = '', $type = 'default', $params = '', $clickConfirm = '', $clickAlert = '', $label = '!', $blank = false) {
+            
+            $path = parse_url($_SERVER['REQUEST_URI']);
+            
+            $url = $path['path'] . '/' . $type . '/' . $id;
+            if (!empty($params)) {
+                $url .=  '/' . $params;
+            }
+            
+            if (!empty($clickConfirm)) {
+                $onclick = 'onclick="return confirm(\''.$clickConfirm.'\');"';
+            } elseif (!empty($clickAlert)) {
+                $onclick = 'onclick="alert(\''.$clickAlert.'\'); return false;"';
+            } else {
+                $onclick = '';
+            }
+            
+            $target = ($blank) ? ' target="_blank"': '';
+
+            switch ($type) {
+                case 'up':
+                    $code = '<a href="'.$url.'" title="Subir en posición" class="tipsy">[&uarr;]</a>';
+                    break;
+                case 'down':
+                    $code = '<a href="'.$url.'" title="Bajar en posición" class="tipsy">[&darr;]</a>';
+                    break;
+                case 'edit':
+                    $code = '<a href="'.$url.'" title="Editar este registro" class="tipsy">[Editar]</a>';
+                    break;
+                case 'remove':
+                    $code = '<a href="'.$url.'" title="Eliminar este registro" class="tipsy" '.$onclick.'>[Quitar]</a>';
+                    break;
+                case 'preview':
+                    $code = '<a href="'.$params.'" title="Previsualizar el contenido" class="tipsy" target="_blank">[Ver]</a>';
+                    break;
+                case 'default':
+                    $code = '<a href="'.$params.'" '.$onclick.''.$target.'>['.$label.']</a>';
+                    break;
+                default:
+                    $code = '<a href="'.$url.'">['.$label.']</a>';
+                    break;
+            }
+
+            return $code;
+        }
+
+        public static function rgb($color, $opacity = null) {
+            
+            $rgb = array(
+                hexdec(substr($color, 0, 2)),
+                hexdec(substr($color, 2, 2)),
+                hexdec(substr($color, 4, 2))
+            );
+            
+            if (!empty($opacity)) 
+                return "rgba({$rgb[0]}, {$rgb[1]}, {$rgb[2]}, $opacity)";
+            else
+                return "rgb({$rgb[0]}, {$rgb[1]}, {$rgb[2]})";
+        }
+        
+        
 	}
     
 }

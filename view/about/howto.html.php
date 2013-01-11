@@ -1,6 +1,6 @@
 <?php 
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -17,7 +17,6 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
-
 $bodyClass = 'about';
 include 'view/prologue.html.php';
 include 'view/header.html.php'; ?>
@@ -37,16 +36,10 @@ jQuery(document).ready(function($) {
 });
 </script>
 
-    <div id="sub-header">
-        <div>
-            <h2><?php echo $this['description']; ?></h2>
-        </div>
-    </div>
-
     <div id="main">
 
-        <div class="widget">
-            <h3 class="title"><?php echo $this['name']; ?></h3>
+        <div id="sub-header" class="sh-info">
+            <h2><?php echo $this['text']; ?></h2>
             <?php echo $this['content']; ?>
         </div>
 

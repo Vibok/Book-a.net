@@ -16,6 +16,59 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
-@import url('user/login.css');
-@import url('user/register.css');
-@import url('user/profile.css');
+
+/* Estilos específicos de la página de usuario */
+
+
+/* este a lines */
+div.side-widget.sharemates > div {
+    border-top: 1px dashed black;
+}
+
+
+div.side-widget.sharemates > div:nth-child(1) {
+    border-top: none !important;
+}
+
+div.center-widget.user-message {padding-left:70px;background:url('/view/css/bocadillo/normal.png') no-repeat 10px 50px white;}
+div.center-widget.user-message h3 {margin-left: -70px !important;}
+div.center-widget.user-message input {margin-bottom: 6px;}
+div.center-widget.user-message input,
+div.center-widget.user-message textarea{display:block;width:510px;}
+div.center-widget.user-message #a-preview{color: #2EAB58;
+font-weight: bold;left: 0px;position: relative;text-decoration: none;text-transform: uppercase;top: 10px;}
+div.center-widget.user-message button{float:right;margin-right:8px;}
+
+/* listado de bookas impulsados */
+div.invested-list-item div.booka-item {
+    padding: 3px 0 0 15px;
+}
+
+div.invested-list-item div.booka-item div.image {
+    margin-right: 20px !important;
+}
+
+
+div.invested-list-item div.booka-item div.social {
+    padding-top: 5px;
+}
+
+div.invested-list-item div.booka-item div.social span.coments {
+    float: left;
+    background: url('/view/css/assets/bocadillo/small.png') no-repeat 0px 0px;
+    padding: 10px 0 16px 50px;
+}
+
+/* ajsutes específicos para esta página de perfil de usuario */
+div.side-widget {
+    margin-bottom: 15px !important;
+}
+
+div.center-widget.pagination,
+div.invested-list-item {
+    margin-bottom: 10px !important;
+}
+
+div.message-send {
+    margin-top: 20px !important;
+}

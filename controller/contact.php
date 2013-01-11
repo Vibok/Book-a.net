@@ -18,21 +18,21 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+    use Base\Library\Page,
+        Base\Core\Redirection,
+        Base\Core\View,
+        Base\Library\Text,
+        Base\Library\Advice,            
+        Base\Library\Mail,
+        Base\Library\Template;
 
-    use Goteo\Library\Page,
-        Goteo\Core\Redirection,
-        Goteo\Core\View,
-        Goteo\Library\Text,
-        Goteo\Library\Mail,
-        Goteo\Library\Template;
-
-    class Contact extends \Goteo\Core\Controller {
+    class Contact extends \Base\Core\Controller {
         
         public function index () {
 
-            $page = Page::get('contact');
+             $page = Page::get('contact');
 
                 $errors = array();
 
@@ -41,7 +41,7 @@ namespace Goteo\Controller {
                     // si falta mensaje, email o asunto, error
                     if(empty($_POST['email'])) {
                         $errors['email'] = Text::get('error-contact-email-empty');
-                    } elseif(!\Goteo\Library\Check::mail($_POST['email'])) {
+                    } elseif(!\Base\Library\Check::mail($_POST['email'])) {
                         $errors['email'] = Text::get('error-contact-email-invalid');
                     } else {
                         $email = $_POST['email'];
@@ -75,14 +75,14 @@ namespace Goteo\Controller {
 
                 // En el contenido:
                 $search  = array('%TONAME%', '%MESSAGE%', '%USEREMAIL%');
-                $replace = array('Goteo', $msg_content, $email);
+                $replace = array('Booka', $msg_content, $email);
                 $content = \str_replace($search, $replace, $template->text);
 
 
                         $mailHandler = new Mail();
 
-                        $mailHandler->to = 'info@platoniq.net';
-                        $mailHandler->toName = 'Goteo';
+                        $mailHandler->to = \CONF_MAIL;
+                        $mailHandler->toName = 'Booka';
                         $mailHandler->subject = $subject;
                         $mailHandler->content = $content;
                         $mailHandler->fromName = '';
@@ -90,22 +90,65 @@ namespace Goteo\Controller {
                         $mailHandler->html = true;
                         $mailHandler->template = $template->id;
                         if ($mailHandler->send($errors)) {
-                            $message = 'Mensaje de contacto enviado correctamente.';
+                            Advice::Info('Tú mensaje se ha enviado correctamente, gracais por contactar con nosotrxs.');
                             $data = array();
                         } else {
-                            $errors[] = 'Ha habido alg�n error al enviar el mensaje.';
+                            Advice::Error('No se ha podido enviar el mensaje, inténtalo más tarde.');
                         }
 
                         unset($mailHandler);
+                    } else {
+                        Advice::Error(implode('<br />', $errors));
                     }
+                }
+
+                if (isset($_GET['email'])) {
+
+                    if (isset($_GET['action'])) {
+                        switch ($_GET['action']) {
+                            case 'confirm':
+                                $subject = 'El email asociado a mi cuenta no está confirmado';
+                                $message = 'Me dice que el email asociado a mi cuenta no está confirmado... (accediste con un solo click? has mirado en correo no deseado?) (por favor, danos alguna pista)';
+                                break;
+
+                            case 'leave':
+                                $subject = 'Estaba intentando darme de baja';
+                                $message = 'Estaba intentando dar de baja mi cuenta de usuario y ha ocurrido algo... (has mirado en correo no deseado?) (por favor, danos alguna pista)';
+                                break;
+
+                            case 'password':
+                                $subject = 'Estaba intentando recuperar mi contraseña';
+                                $message = 'Estaba intentando recuperar la contraseña de mi cuenta y ha ocurrido algo... (has mirado en correo no deseado?) (por favor, danos alguna pista)';
+                                break;
+
+                            case 'email':
+                                $subject = 'Estaba intentando cambiar mi email';
+                                $message = 'Estaba intentando cambiar el email asociado a mi cuenta de usuario y ha ocurrido algo... (has mirado en correo no deseado?) (por favor, danos alguna pista)';
+                                break;
+
+                            default:
+                                $subject = 'Estaba intentando '.$_GET['action'];
+                                $message = 'Estaba intentando '.$_GET['action'] . ' y ha ocurrido algo inesperado... (por favor completar)';
+                                break;
+                        }
+                    } else {
+                        $subject = '';
+                        $message = '';
+                    }
+
+                    $data = array(
+                            'subject' => $subject,
+                            'email'   => $_GET['email'],
+                            'message' => $message
+                    );
                 }
 
                 return new View(
                     'view/about/contact.html.php',
                     array(
-                        'data'    => $data,
-                        'errors'  => $errors,
-                        'message' => $message
+                        'text'    => $page->text,
+                        'content' => $page->content,
+                        'data'    => $data
                     )
                 );
             

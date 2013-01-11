@@ -17,94 +17,131 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
-use Goteo\Library\Text,
-    Goteo\Core\View,
-    Goteo\Model\Blog\Post;
+use Base\Library\Text,
+    Base\Library\Advice,
+    Base\Library\Navi,
+    Base\Core\View;
 
-$blog = $this['blog'];
-$posts = $blog->posts;
-$tag = $this['tag'];
-if (!empty($this['post'])) {
-    $post = Post::get($this['post'], LANG);
+$posts = $this['posts'];
+$post = $this['post'];
+$filters = $this['filters'];
+$side = $this['side'];
+$navi = $this['navi'];
+
+$the_filters = '';
+foreach ($filters as $key=>$value) {
+    $the_filters = "&{$key}={$value}";
 }
+
 $bodyClass = 'blog';
+$home = $this['home'];
 
-// paginacion
-require_once 'library/pagination/pagination.php';
+$lang = (LANG != 'es') ? '?lang=' . LANG : '';
 
-//recolocamos los post para la paginacion
-$the_posts = array();
-foreach ($posts as $i=>$p) {
-    $the_posts[] = $p;
+// metas og: para que al compartir en facebook coja bien el nombre y la imagen (todas las de proyecto y las novedades
+// si es portada, todas las imagenes del blog
+if ($this['show'] == 'list') {
+    $ogmeta = array(
+        'title' => Text::get('logo-booka'),
+        'description' => Text::get('regular-by').' Book-a',
+        'url' => SITE_URL . '/blog'
+    );
+
+    foreach ($posts as $post) {
+        if (count($post->gallery) > 1) {
+            foreach ($post->gallery as $pbimg) {
+                if ($pbimg instanceof Image) {
+                    $ogmeta['image'][] = $pbimg->getLink(570, 344);
+                }
+            }
+        } elseif (!empty($post->image)) {
+            $ogmeta['image'][] = $post->image->getLink(570, 344);
+        }
+    }
+} elseif ($this['show'] == 'post') {
+    $ogmeta = array(
+        'title' => trim(str_replace('<br />', ' ', $post->title)),
+        'description' => Text::get('regular-by').' '.$post->user->name,
+        'url' => SITE_URL . '/blog/'.$post->id
+    );
+
+    if (count($post->gallery) > 1) {
+        foreach ($post->gallery as $pbimg) {
+            if ($pbimg instanceof Image) {
+                $ogmeta['image'][] = $pbimg->getLink(570, 344);
+            }
+        }
+    } elseif (!empty($post->image)) {
+        $ogmeta['image'] = $post->image->getLink(570, 344);
+    }
 }
 
-$pagedResults = new \Paginated($the_posts, 7, isset($_GET['page']) ? $_GET['page'] : 1);
 
 include 'view/prologue.html.php';
 include 'view/header.html.php'; 
 ?>
-	<div id="sub-header-secondary">
-		<div class="clearfix">
-			<h2><a href="/blog">GOTEO<span class="red">BLOG</span></a></h2>
-            <?php echo new View('view/header/share.html.php') ?>
-		</div>
-	</div>
-
-<?php if(isset($_SESSION['messages'])) { include 'view/header/message.html.php'; } ?>
-
-	<div id="main" class="threecols">
-		<div id="blog-content">
-			<?php if ($this['show'] == 'list') : ?>
-				<?php if (!empty($posts)) : ?>
-					<?php while ($post = $pagedResults->fetchPagedRow()) :
-
-                            $share_title = $post->title;
-                            $share_url = SITE_URL . '/blog/' . $post->id;
-                            $facebook_url = 'http://facebook.com/sharer.php?u=' . rawurlencode($share_url . '&t=' . rawurlencode($share_title));
-                            $twitter_url = 'http://twitter.com/home?status=' . rawurlencode($share_title . ': ' . $share_url . ' #Goteo');
-
+	<div id="main" class="sided">
+        
+        <?php // echo new View('view/home/navi.html.php', array('categories' => $this['categories'])); ?>
+        
+		<div class="center">
+			<?php
+            switch ($this['show']) {
+                case 'list':
+                    
+                    // paginacion
+                    $pg = Navi::calcPages(count($posts), $_GET['page'], 20);
+                    
+                    if (!empty($posts)) {
+                        $p = 0;
+                        foreach ($posts as $post) {
+                            $p++;
+                            if ($p < $pg['from'] || $p > $pg['to']) continue;
+                            echo new View('view/blog/post.html.php', array('post'=>$post, 'show' => 'list')); 
+                        }
+                        echo Navi::pageHtml(array('back' => $pg['prev'], 'go'=>$pg['next'], 'white'=>true));
+                    }
+                    break;
+                case 'post': 
+                    echo new View('view/blog/post.html.php', array('post'=>$post, 'show' => 'post')); 
+                    if ($post->allow) : ?>
+                        <div class="center-widget">
+                            <h3 class="fs-L ct2 upcase wshadow underlined"><?php echo Text::get('blog-coments-header'); ?></h3>
+                        <?php
+                            echo new View('view/blog/comments.html.php', $this);
+                            echo new View('view/blog/sendComment.html.php', $this);
                         ?>
-						<div class="widget blog-content-module">
-							<?php echo new View('view/blog/post.html.php', array('post'=>$post->id, 'show' => 'list')); ?>
-                            <ul class="share-goteo">
-                                <li class="sharetext"><?php echo Text::get('regular-share_this'); ?></li>
-                                <li class="twitter"><a href="<?php echo htmlspecialchars($twitter_url) ?>" target="_blank"><?php echo Text::get('regular-twitter'); ?></a></li>
-                                <li class="facebook"><a href="<?php echo htmlspecialchars($facebook_url) ?>" target="_blank"><?php echo Text::get('regular-facebook'); ?></a></li>
-                            </ul>
-                            <div class="comments-num"><a href="/blog/<?php echo $post->id; ?>"><?php echo $post->num_comments > 0 ? $post->num_comments . ' ' .Text::get('blog-comments') : Text::get('blog-no_comments'); ?></a></div>
-						</div>
-					<?php endwhile; ?>
-                    <ul id="pagination">
-                        <?php   $pagedResults->setLayout(new DoubleBarLayout());
-                                echo $pagedResults->fetchPagedNavigation(); ?>
-                    </ul>
-				<?php else : ?>
-					<p>No hay entradas</p>
-				<?php endif; ?>
-			<?php endif; ?>
-			<?php if ($this['show'] == 'post') : ?>
-				<div class="widget post">
-					<?php echo new View('view/blog/post.html.php', $this);
-                        $share_title = $post->title;
-                        $share_url = SITE_URL . '/blog/' . $post->id;
-                        $facebook_url = 'http://facebook.com/sharer.php?u=' . rawurlencode($share_url . '&t=' . rawurlencode($share_title));
-                        $twitter_url = 'http://twitter.com/home?status=' . rawurlencode($share_title . ': ' . $share_url . ' #Goteo');
-                    ?>
-					<ul class="share-goteo">
-							<li class="sharetext"><?php echo Text::get('regular-share_this'); ?></li>
-							<li class="twitter"><a href="<?php echo htmlspecialchars($twitter_url) ?>" target="_blank"><?php echo Text::get('regular-twitter'); ?></a></li>
-							<li class="facebook"><a href="<?php echo htmlspecialchars($facebook_url) ?>" target="_blank"><?php echo Text::get('regular-facebook'); ?></a></li>
-					</ul>
-					<div class="comments-num"><a href="/blog/<?php echo $post->id; ?>"><?php echo $post->num_comments > 0 ? $post->num_comments . ' ' .Text::get('blog-comments') : Text::get('blog-no_comments'); ?></a></div>
-				</div>
-                <?php echo new View('view/blog/comments.html.php', $this) ?>
-                <?php echo new View('view/blog/sendComment.html.php', $this) ?>
-			<?php endif; ?>
+                        </div>
+
+                <?php if (empty($_SESSION['user'])) include 'view/blog/advice.html.php'; ?>
+                <?php endif; ?>
+                    <!-- Paginación -->
+                    <div class="results-bar">
+                        <ul class="page-control line">
+                            <?php if (!empty($navi['prev'])) : ?>
+                            <li><a class="prev-page fs-XS ft3 ct3" href="/blog/<?php echo $navi['prev']; ?>">< <?php echo Text::get('regular-prev'); ?></a></li>
+                            <?php else : ?>
+                            <li></li>
+                            <?php endif; ?>
+                            <?php if (!empty($navi['next'])) : ?>
+                            <li><a class="next-page fs-XS ft3 ct3" href="/blog/<?php echo $navi['next']; ?>"><?php echo Text::get('regular-next'); ?> ></a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                <?php 
+                    break;
+            } ?>
 		</div>
-		<div id="blog-sidebar">
-			<?php echo new View('view/blog/side.html.php', array('blog'=>$this['blog'], 'type'=>'posts')) ; ?>
-			<?php echo new View('view/blog/side.html.php', array('blog'=>$this['blog'], 'type'=>'tags')) ; ?>
-			<?php echo new View('view/blog/side.html.php', array('blog'=>$this['blog'], 'type'=>'comments')) ; ?>
+		<div class="side">
+        <?php foreach ($side as $type=>$data) {
+            echo new View('view/blog/side.html.php', array('type'=>$type, 'title'=>$data['title'], 'items'=>$data['items'])) ; 
+        }
+        ?>
+                    <div class="side-widget">
+                        <ul class="blog-side-list">
+                            <li><a rel="alternate" type="application/rss+xml" title="RSS" href="/rss<?php echo $lang ?>" target="_blank"><?php echo Text::get('regular-share-rss'); ?></a></li>
+                        </ul>
+                    </div>
 		</div>
 
 	</div>

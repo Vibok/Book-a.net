@@ -1,0 +1,77 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* Estilos de iconos, botones e imágenes de fondo */
+
+/* barra de avance (aka termometro horizontal */
+
+
+
+
+/* iconos de los objetivos */
+.milestone li {
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    background-color: transparent;
+}
+
+/* 25% libro */
+.milestone li.near {
+    background-image: url('/view/css/assets/icons/book.png');
+}
+
+/* 50% traducción */
+.milestone li.mid {
+    background-image: url('/view/css/assets/icons/translate.png');
+}
+
+/* 50% biblioteca */
+.milestone li.far {
+    background-image: url('/view/css/assets/icons/library.png');
+}
+
+
+
+/* Muescas:
+- de coleccion en widget
+- de barra de navegación
+*/
+
+/* Indicadores del superform */
+/* Element badges. Order is imporant
+pero no los usamos mas
+div.superform div.elements > ol > li.required > .title {
+    background: url('/view/css/assets/badge/required.png') no-repeat right center;
+}
+
+div.superform div.elements > ol > li.ok > .title {
+    background: url('/view/css/assets/badge/ok.png') no-repeat right center;
+}
+
+div.superform div.elements > ol > li.error > .title  {
+    background: url('/view/css/assets/badge/error.png') no-repeat right center !important;
+}
+
+div.superform div.elements > ol > li.busy > .title {
+    background: url('/view/css/assets/badge/busy.gif') no-repeat right center;
+}
+
+div.superform li.element > div.feedback > div.error blockquote {
+    background: url("/view/css/assets/badge/error.png") no-repeat left .2em;
+}
+ */

@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,59 +18,37 @@
  *
  */
 
-use Goteo\Library\Text,
-    Goteo\Core\View;
+use Base\Library\Text,
+    Base\Core\View;
 
-$bodyClass = 'dashboard project-edit';
+$bodyClass = 'dashboard';
 
 $user = $_SESSION['user'];
 
 include 'view/prologue.html.php';
-include 'view/header.html.php'; ?>
+include 'view/header.html.php'; 
+?>
 
-        <div id="sub-header">
-            <div class="dashboard-header">
-                <a href="/user/<?php echo $user->id; ?>" target="_blank"><img src="<?php echo $user->avatar->getLink(56, 56, true); ?>" /></a>
-                <h2><span>                    <?php if (empty($this['option'])) {
-                        echo Text::get('dashboard-header-main');
-                    } else {
-                        echo Text::get('dashboard-header-main') . ' / ' . $this['menu'][$this['section']]['options'][$this['option']];
-                    } ?></span></h2>
-            </div>
+    <div id="main">
+
+        <div id="navi-bar">
+            <ul class="top line">
+                <li<?php if ($this['show'] == 'profile') echo ' class="current"'; ?>><a href="/dashboard/profile"><?php echo Text::get('dashboard-menu-profile'); ?></a></li>
+                <li<?php if ($this['show'] == 'preferences') echo ' class="current"'; ?>><a href="/dashboard/preferences"><?php echo Text::get('dashboard-menu-preferences'); ?></a></li>
+                <li><a href="/user/profile/<?php echo $user->id ?>" target="_blank"><?php echo Text::get('dashboard-menu-access'); ?></a></li>
+            </ul>
         </div>
 
-        <?php  echo new View ('view/dashboard/menu.html.php', $this) ?>
+        <div class="widget">
+            <h2 class="htitle wshadow"><?php echo Text::get('dashboard-menu-home'); ?></h2>
 
-<?php if(isset($_SESSION['messages'])) { include 'view/header/message.html.php'; } ?>
-
-        <div id="main" class="<?php echo $this['option'] ?>">
-
-<?php if ($this['section'] == 'projects') echo new View ('view/dashboard/projects/selector.html.php', $this); ?>
-<?php if ($this['section'] == 'translates') echo new View ('view/dashboard/translates/selector.html.php', $this); ?>
-
-            <?php if (!empty($this['message'])) : ?>
-                <div class="widget">
-                    <p><?php echo $this['message']; ?></p>
-                </div>
-            <?php endif; ?>
-
-            <?php if (!empty($this['errors'])) : ?>
-                <div class="widget" style="color:red;">
-                    <p><?php echo implode('<br />',$this['errors']); ?></p>
-                </div>
-            <?php endif; ?>
-
-            <?php if (!empty($this['success'])) : ?>
-                <div class="widget">
-                    <p><?php echo implode('<br />',$this['success']); ?></p>
-                </div>
-            <?php endif; ?>
-
-            <?php if (!empty($this['section']) && !empty($this['option'])) {
-                echo new View ('view/dashboard/'.$this['section'].'/'.$this['option'].'.html.php', $this);
-            } ?>
+            <?php echo new View ('view/dashboard/user/'.$this['show'].'.html.php', $this); ?>
 
         </div>
+
+
+    </div>
+
 <?php
 include 'view/footer.html.php';
 include 'view/epilogue.html.php';

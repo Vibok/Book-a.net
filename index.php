@@ -1,51 +1,45 @@
 <?php
-/*
- *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
- *	This file is part of Goteo.
- *
- *  Goteo is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Goteo is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public License
- *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
- *
- */
 
-use Goteo\Core\Resource,
-    Goteo\Core\Error,
-    Goteo\Core\Redirection,
-    Goteo\Core\ACL,
-    Goteo\Library\Text,
-    Goteo\Library\Message,
-    Goteo\Library\Lang;
+use Base\Core\Resource,
+    Base\Core\Error,
+    Base\Core\Redirection,
+    Base\Core\ACL,
+    Base\Library\Text,
+    Base\Library\Advice,
+    Base\Library\Lang;
 
 require_once 'config.php';
 require_once 'core/common.php';
 
-// Include path
-//set_include_path(GOTEO_PATH . PATH_SEPARATOR . '.');
+/*
+ * Pagina de en mantenimiento
+ */
+if (CONF_MAINTENANCE === true) {
+        $bodyClass = 'screen';
+        include 'view/prologue.html.php';
+        ?>
+        <div id="its">
+        <center>
+        <h1>Plataforma en mantenimiento</h1>
+        </div>
+        <?php
+        include 'view/epilogue.html.php';
+        exit;
+}
+
 
 // Autoloader
 spl_autoload_register(
 
     function ($cls) {
 
-        $file = __DIR__ . '/' . implode('/', explode('\\', strtolower(substr($cls, 6)))) . '.php';
+        $file = CONF_PATH . implode(DIRECTORY_SEPARATOR, explode('\\', strtolower(substr($cls, 5)))) . '.php';
         $file = realpath($file);
 
         if ($file === false) {
 
             // Try in library
-//            $file = __DIR__ . '/library/' . implode('/', explode('\\', strtolower(substr($cls, 6)))) . '.php';
-            $file = __DIR__ . '/library/' . strtolower($cls) . '.php';
-//            die($cls . ' - ' . $file); //Si uso Text::get(id) no lo pilla
+            $file = CONF_PATH . 'library' . DIRECTORY_SEPARATOR . strtolower($cls) . '.php';
         }
 
         if ($file !== false) {
@@ -61,7 +55,7 @@ set_error_handler (
 
     function ($errno, $errstr, $errfile, $errline, $errcontext) {
         // @todo Insert error into buffer
-//        echo "Error:  {$errno}, {$errstr}, {$errfile}, {$errline}, {$errcontext}<br />";
+//            echo "Error:  {$errno}, {$errstr}, {$errfile}, {$errline}, {$errcontext}<br />";
         //throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
     }
 
@@ -70,14 +64,14 @@ set_error_handler (
 /**
  * Sesión.
  */
-session_name('goteo');
+session_name('booka');
 session_start();
 
 // set Lang
 Lang::set();
-// change current locale
-$locale = Lang::locale();
-Lang::gettext( $locale, \GOTEO_GETTEXT_DOMAIN );
+
+// cambiamos el locale
+\setlocale(\LC_TIME, Lang::locale());
 
 // Get URI without query string
 $uri = strtok($_SERVER['REQUEST_URI'], '?');
@@ -92,18 +86,17 @@ try {
 
     // Check permissions on requested URI
     if (!ACL::check($uri)) {
-        Message::Info(Text::get('user-login-required-access'));
+        Advice::Info(Text::get('user-login-required-access'));
+        
+        // si la pagina que piden existe
+        throw new Redirection("/user/login/?return=".rawurlencode($uri));
 
-        //si es un cron (ejecutandose) con los parámetros adecuados, no redireccionamos
-        if (strpos($uri, 'cron') !== false && strcmp($_GET[md5(CRON_PARAM)], md5(CRON_VALUE)) === 0) {
-            // proceed
-        } else {
-            throw new Redirection("/user/login/?return=".rawurlencode($uri));
-        }
+        // si no existe error 404
+
     }
 
     // Get controller name
-    if (!empty($segments) && class_exists("Goteo\\Controller\\{$segments[0]}")) {
+    if (!empty($segments) && class_exists("Base\\Controller\\{$segments[0]}")) {
         // Take first segment as controller
         $controller = array_shift($segments);
     } else {
@@ -113,7 +106,7 @@ try {
     // Continue
     try {
 
-        $class = new ReflectionClass("Goteo\\Controller\\{$controller}");
+        $class = new ReflectionClass("Base\\Controller\\{$controller}");
 
         if (!empty($segments) && $class->hasMethod($segments[0])) {
             $method = array_shift($segments);
@@ -163,6 +156,10 @@ try {
 
     } catch (\ReflectionException $e) {}
 
+        echo $e->getMessage();
+        echo '<hr />';
+        echo \trace($e);
+        die;
     throw new Error(Error::NOT_FOUND);
 
 } catch (Redirection $redirection) {

@@ -18,14 +18,13 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+	use Base\Core\Redirection,
+		Base\Core\Model,
+        Base\Core\View;
 
-	use Goteo\Core\Redirection,
-		Goteo\Core\Model,
-        Goteo\Core\View;
-
-	class Mail extends \Goteo\Core\Controller {
+	class Mail extends \Base\Core\Controller {
 
 	    /**
 	     * solo si recibe un token válido
@@ -40,7 +39,7 @@ namespace Goteo\Controller {
                     if ($query = Model::query('SELECT html FROM mail WHERE email = ? AND id = ?', array($parts[1], $parts[2]))) {
                         $content = $query->fetchColumn();
                         $baja = \SITE_URL . '/user/leave/?email=' . $parts[1];
-                        return new View ('view/email/goteo.html.php', array('content'=>$content, 'baja' => $baja));
+                        return new View ('view/email/default.html.php', array('content'=>$content, 'baja' => $baja));
                     }
                 }
             }

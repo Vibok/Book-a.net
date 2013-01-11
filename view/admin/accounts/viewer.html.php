@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,17 +18,16 @@
  *
  */
 
-
-use Goteo\Core\View;
+use Base\Core\View;
 
 $date = !empty($_GET['date']) ? $_GET['date'] : date('Y-m-d');
 $type = in_array($_GET['type'], array('invest', 'execute', 'daily', 'dopay', 'verify')) ? $_GET['type'] : 'invest';
 if (!empty($_GET['date']) && !empty($_GET['type'])) {
     $showlog = true;
     if ($type == 'invest') {
-        $file = GOTEO_PATH.'logs/'.str_replace('-', '', $date).'_invest.log';
+        $file = CONF_PATH.'logs/'.str_replace('-', '', $date).'_invest.log';
     } else {
-        $file = GOTEO_PATH.'logs/cron/'.str_replace('-', '', $date).'_'.$type.'.log';
+        $file = CONF_PATH.'logs/cron/'.str_replace('-', '', $date).'_'.$type.'.log';
     }
 
     if (file_exists($file)) {
@@ -53,7 +52,7 @@ if (!empty($_GET['date']) && !empty($_GET['type'])) {
             </select>
         </div>
         <div style="float:left;margin:5px;" id="hdate">
-            <label for="date-filter">Fecha del log:</label><br />
+            <label for="hdate">Fecha del log:</label><br />
             <?php echo new View('library/superform/view/element/datebox.html.php', array('value'=>$date, 'id'=>'hdate', 'name'=>'date')); ?>
         </div>
         <div style="float:left;margin:5px;">

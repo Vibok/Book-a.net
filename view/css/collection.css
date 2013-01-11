@@ -1,0 +1,69 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* Estilos específicos para las colecciones */
+div#bookas{
+    margin-left: -22px;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+div#bookas > div.widget-booka {
+    margin-left: 22px;
+    margin-bottom: 32px;
+    padding: 0;
+}
+
+div.collections-list-item div.sh-booka {
+    position: relative;
+}
+
+ul.collection-side-list {
+    margin-top: 25px;
+    width: 250px;
+}
+
+ul.collection-side-list li {
+    margin-bottom: 25px;
+}
+
+ul.collection-side-list li span.date {
+    display:block;
+    margin-bottom: 6px;
+}
+
+div.collection-content p ,
+div.collection-content p > * {
+    font-size: 14px;
+    line-height: 19px;
+}
+
+
+
+/*
+div.sh-booka div.lcol {
+    position: absolute;
+    left: 0px;
+    z-index: 9;
+    width: 25px;
+    height: 297px;
+    background-image: url('/view/css/assets/lcol.png');
+    background-position: right;
+    background-repeat: repeat-y;
+}
+*/

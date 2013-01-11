@@ -18,22 +18,19 @@
  *
  */
 
-use Goteo\Library\Text;
+use Base\Library\Text;
 
 // paginacion
 require_once 'library/pagination/pagination.php';
 
 $filters = $this['filters'];
 $templates = $this['templates'];
+$the_filters = '';
+foreach ($filters as $key=>$value) {
+    $the_filters .= "&{$key}={$value}";
+}
 
-//arrastramos los filtros
-$filter = "?user={$filters['user']}&template={$filters['template']}";
-
-$sended = $this['sended'];
-
-$pagedResults = new \Paginated($sended, 20, isset($_GET['page']) ? $_GET['page'] : 1);
-
-
+$pagedResults = new \Paginated($this['sended'], 20, isset($_GET['page']) ? $_GET['page'] : 1);
 ?>
 <div class="widget board">
     <form id="filter-form" action="/admin/sended" method="get">
@@ -46,7 +43,7 @@ $pagedResults = new \Paginated($sended, 20, isset($_GET['page']) ? $_GET['page']
                 </td>
                 <td>
                     <label for="template-filter">Plantilla</label><br />
-                    <select id="template-filter" name="template" >
+                    <select id="template-filter" name="template" onchange="document.getElementById('filter-form').submit();" >
                         <option value="">Todas las plantillas</option>
                     <?php foreach ($templates as $templateId=>$templateName) : ?>
                         <option value="<?php echo $templateId; ?>"<?php if ($filters['template'] == $templateId) echo ' selected="selected"';?>><?php echo $templateName; ?></option>
@@ -55,14 +52,16 @@ $pagedResults = new \Paginated($sended, 20, isset($_GET['page']) ? $_GET['page']
                 </td>
             </tr>
             <tr>
-                <td colspan="2"><input type="submit" name="filter" value="Filtrar"></td>
+                <td colspan="2"><button type="submit" name="filter" class="std-btn tight menu-btn">Filtrar</button></td>
             </tr>
         </table>
     </form>
 </div>
 
-<?php if (!empty($sended)) : ?>
 <div class="widget board">
+<?php if ($filters['filtered'] != 'yes') : ?>
+    <p>Es necesario poner algun filtro.</p>
+<?php elseif (!empty($this['sended'])) : ?>
     <table>
         <thead>
             <tr>
@@ -90,7 +89,7 @@ $pagedResults = new \Paginated($sended, 20, isset($_GET['page']) ? $_GET['page']
 </div>
 <ul id="pagination">
 <?php   $pagedResults->setLayout(new DoubleBarLayout());
-        echo $pagedResults->fetchPagedNavigation(str_replace('?', '&', $filter)); ?>
+        echo $pagedResults->fetchPagedNavigation(str_replace('?', '&', $the_filters)); ?>
 </ul>
 <?php else : ?>
 <p>No se han encontrado registros</p>

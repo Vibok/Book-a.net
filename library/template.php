@@ -17,11 +17,10 @@
  *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
  *
  */
+namespace Base\Library {
 
-namespace Goteo\Library {
-
-	use Goteo\Core\Model,
-        Goteo\Core\Exception;
+	use Base\Core\Model,
+        Base\Core\Exception;
 
 	/*
 	 * Clase para gestionar las plantillas de los emails automáticos
@@ -38,52 +37,36 @@ namespace Goteo\Library {
 
         static public function get ($id, $lang = \LANG) {
 
-            // buscamos la página para este nodo en este idioma
-			$sql = "SELECT  template.id as id,
-                            template.name as name,
-                            template.purpose as purpose,
-                            IFNULL(template_lang.title, template.title) as title,
-                            IFNULL(template_lang.text, template.text) as text
+			$sql = "SELECT  
+                        *,
+                        IFNULL(title_".$lang.", title_es) as title,
+                        IFNULL(text_".$lang.", text_es) as text
                      FROM template
-                     LEFT JOIN template_lang
-                        ON  template_lang.id = template.id
-                        AND template_lang.lang = :lang
                      WHERE template.id = :id
                 ";
 
-			$query = Model::query($sql, array(
-                                            ':id' => $id,
-                                            ':lang' => $lang
-                                        )
-                                    );
+			$query = Model::query($sql, array(':id' => $id));
 			$template = $query->fetchObject(__CLASS__);
             return $template;
 		}
 
 		/*
-		 *  Metodo para la lista de páginas
+		 *  Metodo para la lista completa de plantillas
 		 */
 		public static function getAll() {
             $templates = array();
 
             try {
 
-                $values = array(':lang' => \LANG);
-
                 $sql = "SELECT
-                            template.id as id,
-                            template.name as name,
-                            template.purpose as purpose,
-                            IFNULL(template_lang.title, template.title) as title,
-                            IFNULL(template_lang.text, template.text) as text
+                            *,
+                            IFNULL(title_".\LANG.", title_es) as title,
+                            IFNULL(text_".\LANG.", text_es) as text
                         FROM template
-                        LEFT JOIN template_lang
-                            ON  template_lang.id = template.id
-                            AND template_lang.lang = :lang
                         ORDER BY name ASC
                         ";
 
-                $query = Model::query($sql, $values);
+                $query = Model::query($sql);
                 foreach ($query->fetchAll(\PDO::FETCH_CLASS, __CLASS__) as $template) {
                     $templates[] = $template;
                 }
@@ -126,12 +109,12 @@ namespace Goteo\Library {
                 $allok = false;
             }
 
-            if (empty($this->title)) {
-                $errors[] = 'Registro sin titulo';
+            if (empty($this->title_es)) {
+                $errors[] = 'Registro sin asunto';
                 $allok = false;
             }
 
-            if (empty($this->text)) {
+            if (empty($this->text_es)) {
                 $errors[] = 'Registro sin contenido';
                 $allok = false;
             }
@@ -150,14 +133,16 @@ namespace Goteo\Library {
                     ':template' => $this->id,
                     ':name' => $this->name,
                     ':purpose' => $this->purpose,
-                    ':title' => $this->title,
-                    ':text' => $this->text
+                    ':title_es' => $this->title_es,
+                    ':title_en' => $this->title_en,
+                    ':text_es' => $this->text_es,
+                    ':text_en' => $this->text_en
                 );
 
 				$sql = "REPLACE INTO template
-                            (id, name, purpose, title, text)
+                            (id, name, purpose, title_es, title_en, text_es, text_en)
                         VALUES
-                            (:template, :name, :purpose, :title, :text)
+                            (:template, :name, :purpose, :title_es, :title_en, :text_es, :text_en)
                         ";
 				if (Model::query($sql, $values)) {
                     return true;

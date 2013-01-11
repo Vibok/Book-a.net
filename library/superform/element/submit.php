@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,8 +18,7 @@
  *
  */
 
-
-namespace Goteo\Library\SuperForm\Element {
+namespace Base\Library\SuperForm\Element {
     
     class Submit extends Named {
         

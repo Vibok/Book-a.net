@@ -18,8 +18,7 @@
  *
  */
 
-
-namespace Goteo\Library {
+namespace Base\Library {
 
 	/*
 	 * Clase para verificar valores
@@ -44,10 +43,10 @@ namespace Goteo\Library {
 				$num[$i] = substr($value, $i, 1);
 			}
 
-                        //si no tiene un formato valido devuelve error (incluye numero de empresa belga)
-                        if (!preg_match('/((^[A-Z]{1}[0-9]{7}[A-Z0-9]{1}$|^[T]{1}[A-Z0-9]{8}$)|^[0-9]{8}[A-Z]{1}$|^[0-9]{9,10})/', $value)) {
-                                return false;
-                        }
+			//si no tiene un formato valido devuelve error
+			if (!preg_match('/((^[A-Z]{1}[0-9]{7}[A-Z0-9]{1}$|^[T]{1}[A-Z0-9]{8}$)|^[0-9]{8}[A-Z]{1}$)/', $value)) {
+				return false;
+			}
 
 			//comprobacion de NIFs estandar
 			if (preg_match('/(^[0-9]{8}[A-Z]{1}$)/', $value)) {
@@ -101,10 +100,6 @@ namespace Goteo\Library {
 					return false;
 				}
 			}
-                        // Registration numbers in Belgium (9-10 digits only)
-                        if (preg_match('/^\d{9,10}$/',$value)) {
-                                return true;
-                        }
 			//si todavia no se ha verificado devuelve error
 			return false;
 		}
@@ -238,7 +233,7 @@ namespace Goteo\Library {
         public static function reorder($idReg, $updown, $table, $idField = 'id', $orderField = 'order', $extra = array()) {
 
             //uso el modelo core para hacer los querys
-            $model = '\Goteo\Core\Model';
+            $model = '\Base\Core\Model';
             $regs = array();
 
             // ojo con el campos extra para no pisar otros tegistros

@@ -35,9 +35,9 @@ class SocialAuth {
 	public $original_provider;
 	public $last_error = '';
 	//datos que se recopilan
-	public $user_data = array('username' => null, 'name' => null, 'email' => null, 'profile_image_url' => null, 'website' => null, 'about' => null, 'location'=>null,'twitter'=>null,'facebook'=>null,'google'=>null,'identica'=>null,'linkedin'=>null);
+	public $user_data = array('username' => null, 'name' => null, 'email' => null, 'profile_image_url' => null, 'about' => null, 'keywords' => null, 'twitter'=>null,'facebook'=>null,'google'=>null,'linkedin'=>null);
 	//datos que se importaran (si se puede) a la tabla 'user'
-	public $import_user_data = array('name', 'about', 'location', 'twitter', 'facebook', 'google', 'identica', 'linkedin');
+	public $import_user_data = array('name', 'about', 'twitter', 'facebook', 'google', 'linkedin');
 	public $tokens = array('twitter'=>array('token'=>'','secret'=>''), 'facebook'=>array('token'=>'','secret'=>''), 'linkedin'=>array('token'=>'','secret'=>''), 'openid'=>array('token'=>'','secret'=>'')); //secretos generados en el oauth
 
 	protected $twitter_id;
@@ -50,7 +50,7 @@ class SocialAuth {
 
 	protected $openid_server;
 	public $openid_public_servers = array(
-		"Google" => "https://www.google.com/accounts/o8/id",
+		"google" => "https://www.google.com/accounts/o8/id",
 		"Yahoo" => "https://me.yahoo.com",
 		"myOpenid" => "http://myopenid.com/",
 		"AOL" => "https://www.aol.com",
@@ -266,9 +266,9 @@ class SocialAuth {
 			$this->user_data['name'] = $res->name;
 			if($res->username) $this->user_data['username'] = $res->username;
 			if($res->email) $this->user_data['email'] = $res->email;
-			if($res->website) $this->user_data['website'] = $res->website; //ojo, pueden ser varias lineas con varias webs
-			if($res->about) $this->user_data['about'] = $res->about;
-			if($res->location->name) $this->user_data['location'] = $res->location->name;
+//			if($res->website) $this->user_data['website'] = $res->website; //ojo, pueden ser varias lineas con varias webs
+//			if($res->about) $this->user_data['about'] = $res->about;
+//			if($res->location->name) $this->user_data['location'] = $res->location->name;
 			if($res->id) $this->user_data['profile_image_url'] = "http://graph.facebook.com/".$res->id."/picture?type=large";
 			//facebook link
 			if($res->link) $this->user_data['facebook'] = $res->link;
@@ -318,7 +318,7 @@ class SocialAuth {
 				$this->user_data['username'] = basename($this->user_data['linkedin']);
 			}
 
-
+            /*
 			if($profile_data->{"member-url-resources"}->{"member-url"}) {
 				$urls = array();
 				foreach($profile_data->{"member-url-resources"}->{"member-url"} as $url) {
@@ -326,8 +326,10 @@ class SocialAuth {
 				}
 				$this->user_data['website'] .= implode("\n",$urls);
 			}
+             * 
+             */
 			if($profile_data->headline) $this->user_data['about'] = current($profile_data->headline);
-			if($profile_data->location->name) $this->user_data['location'] = current($profile_data->location->name);
+//			if($profile_data->location->name) $this->user_data['location'] = current($profile_data->location->name);
 			if($profile_data->{"picture-url"}) $this->user_data['profile_image_url'] = current($profile_data->{"picture-url"});
 			//si el usuario tiene especificada su cuenta twitter
 			if($profile_data->{"twitter-accounts"}->{"twitter-account"}) $this->user_data['twitter'] = 'http://twitter.com/' . current($profile_data->{"twitter-accounts"}->{"twitter-account"}->{"provider-account-name"});
@@ -377,8 +379,8 @@ class SocialAuth {
 			$this->user_data['profile_image_url'] = str_replace("_normal","",$userInfo->profile_image_url);
 			//twitter link
 			$this->user_data['twitter'] = 'http://twitter.com/'.$userInfo->screen_name;
-			if($userInfo->url) $this->user_data['website'] = $userInfo->url;
-			if($userInfo->location) $this->user_data['location'] = $userInfo->location;
+//			if($userInfo->url) $this->user_data['website'] = $userInfo->url;
+//			if($userInfo->location) $this->user_data['location'] = $userInfo->location;
 			if($userInfo->description) $this->user_data['about'] = $userInfo->description;
 
 			return true;
@@ -409,7 +411,7 @@ class SocialAuth {
 				//print_r($data);print_r($openid);print_r($openid->identity);die;
 				/*
 				//por seguridad no aceptaremos conexions de OpenID que no nos devuelvan el email
-				if(!Goteo\Library\Check::mail($data['contact/email'])) {
+				if(!Base\Library\Check::mail($data['contact/email'])) {
 					$this->last_error = "oauth-openid-email-required";
 					return false;
 				}*/
@@ -418,7 +420,8 @@ class SocialAuth {
 				$this->user_data['username'] = $data['namePerson/friendly'];
 				$this->user_data['name']  = $data['namePerson'];
 				if(empty($this->user_data['name'])) $this->user_data['name']  = trim($data['namePerson/first'] . " " . $data['namePerson/last']);
-				if($data['contact/country/home']) $this->user_data['location'] = $data['contact/country/home'];
+//				if($data['contact/country/home']) $this->user_data['location'] = $data['contact/country/home'];
+                $this->user_data['profile_image_url'] = null;
 
 				//no se usan tokens para openid, guardamos el servidor como token
 				$this->tokens['openid']['token'] = $this->openid_server;
@@ -439,23 +442,23 @@ class SocialAuth {
 	}
 
 	/**
-	 * Hace el login en goteo si es posible (existen tokens o el email es el mismo)
+	 * Hace el login en booka si es posible (existen tokens o el email es el mismo)
 	 * Guarda los tokens si se encuentra el usuario
 	 *
-	 * @param $force_login	logea en goteo sin comprovar que la contraseña esté vacía o que el usuario este activo
+	 * @param $force_login	logea en booka sin comprovar que la contraseña esté vacía o que el usuario este activo
 	 * */
-	public function goteoLogin($force_login = false) {
+	public function bookaLogin($force_login = false) {
 		/*****
 		 * POSIBLE PROBLEMA:
-		 * en caso de que ya se haya dado permiso a la aplicación goteo,
-		 * el token da acceso al login del usuario aunque este haya cambiado el email en goteo.org
+		 * en caso de que ya se haya dado permiso a la aplicación,
+		 * el token da acceso al login del usuario aunque este haya cambiado el email
 		 * es un problema? o da igual...
 		*****/
 		//Comprovar si existe el mail en la base de datos
 
 		$username = "";
 		//comprovar si existen tokens
-		$query = Goteo\Core\Model::query('SELECT id FROM user WHERE id = (SELECT user FROM user_login WHERE provider = :provider AND oauth_token = :token AND oauth_token_secret = :secret)', array(':provider' => $this->provider, ':token' => $this->tokens[$this->provider]['token'], ':secret' => $this->tokens[$this->provider]['secret']));
+		$query = Base\Core\Model::query('SELECT id FROM user WHERE id = (SELECT user FROM user_login WHERE provider = :provider AND oauth_token = :token AND oauth_token_secret = :secret)', array(':provider' => $this->provider, ':token' => $this->tokens[$this->provider]['token'], ':secret' => $this->tokens[$this->provider]['secret']));
 
 		$username = $query->fetchColumn();
 
@@ -467,7 +470,7 @@ class SocialAuth {
 			 * por tanto, en caso de que no existan tokens, se deberá preguntar la contraseña al usuario
 			 * si el usuario no tiene contraseña, podemos permitir el acceso directo o denegarlo (mas seguro)
 			 * */
-			$query = Goteo\Core\Model::query('SELECT id,password FROM user WHERE email = ?', array($this->user_data['email']));
+			$query = Base\Core\Model::query('SELECT id,password FROM user WHERE email = ?', array($this->user_data['email']));
 			if($user = $query->fetchObject()) {
 				$username = $user->id;
 				//sin no existe contraseña permitimos acceso
@@ -476,14 +479,14 @@ class SocialAuth {
 				if(!$force_login) {
 					//con contraseña lanzamos un error de usuario existente, se usará para mostrar un formulario donde preguntar el password
 					$this->user_data['username'] = $username;
-					$this->last_error = "oauth-goteo-user-password-exists";
+					$this->last_error = "oauth-user-password-exists";
 					return false;
 				}
 			}
 			else {
 				//El usuario no existe
 				//redirigir a user/confirm para mostrar un formulario para que el usuario compruebe/rellene los datos que faltan
-				$this->last_error = "oauth-goteo-user-not-exists";
+				$this->last_error = "oauth-user-not-exists";
 				return false;
 			}
 
@@ -493,39 +496,42 @@ class SocialAuth {
 		$this->saveTokensToUser($username);
 
 		//actualizar la imagen de avatar si no tiene!
-		if($this->user_data['profile_image_url']) {
-			$query = Goteo\Core\Model::query('SELECT id FROM image WHERE id = (SELECT avatar FROM user WHERE id = ?)', array($username));
+		if(!empty($this->user_data['profile_image_url'])) {
+			$query = Base\Core\Model::query('SELECT id FROM image WHERE id = (SELECT avatar FROM user WHERE id = ?)', array($username));
 			if(!($query->fetchColumn())) {
 
-				$img = new Goteo\Model\Image($this->user_data['profile_image_url']);
+				$img = new Base\Model\Image($this->user_data['profile_image_url']);
 				$img->save();
 
 				if($img->id) {
-					Goteo\Core\Model::query("REPLACE user_image (user, image) VALUES (:user, :image)", array(':user' => $username, ':image' => $img->id));
-					Goteo\Core\Model::query("UPDATE user SET avatar = :avatar WHERE id = :user", array(':user'=>$username,':avatar'=>$img->id));
+					Base\Core\Model::query("UPDATE user SET avatar = :avatar WHERE id = :user", array(':user'=>$username,':avatar'=>$img->id));
 				}
 			}
 		}
 
 		//el usuario existe, creamos el objeto
-		$user = Goteo\Model\User::get($username);
+		$user = Base\Model\User::get($username);
 
 		//actualizar datos de usuario si no existen:
-		$update = array();
+		$update = array("user = :user");
 		$data = array(':user' => $username);
 		foreach($this->import_user_data as $key) {
+            if ($key == 'name') continue;
+            $update[] = "$key = :$key";
 			if(empty($user->$key) && $this->user_data[$key]) {
-				$update[] = "$key = :$key";
 				$data[":$key"] = $this->user_data[$key];
-			}
+			} else {
+				$data[":$key"] = $user->$key;
+            }
 		}
 		if($update) {
-			Goteo\Core\Model::query("UPDATE user SET ".implode(", ",$update)." WHERE id = :user", $data);
+			Base\Core\Model::query("REPLACE user_data SET ".implode(", ",$update), $data);
 			//rebuild user object
-			$user = Goteo\Model\User::get($username);
+			$user = Base\Model\User::get($username);
 		}
 
 		//actualizar las webs
+        /*
 		if($this->user_data['website']) {
 			$current_webs = array();
 			if(is_array($user->webs)) {
@@ -539,29 +545,30 @@ class SocialAuth {
 				foreach($webs[0] as $web) {
 					$web = strtolower($web);
 					if(!in_array($web,$current_webs)) {
-						Goteo\Core\Model::query("INSERT user_web (user, url) VALUES (:user, :url)", array(':user' => $username, ':url' => $web));
+						Base\Core\Model::query("INSERT user_web (user, url) VALUES (:user, :url)", array(':user' => $username, ':url' => $web));
 						$updated = true;
 					}
 				}
 				//rebuild user object
-				if($updated) $user = Goteo\Model\User::get($username);
+				if($updated) $user = Base\Model\User::get($username);
 			}
 		}
+         * 
+         */
 
 		//Si no tiene imagen, importar de gravatar.com?
 		if(!$user->avatar || $user->avatar->id == 1) {
-			$query = Goteo\Core\Model::query('SELECT id FROM image WHERE id = (SELECT avatar FROM user WHERE id = ?)', array($username));
+			$query = Base\Core\Model::query('SELECT id FROM image WHERE id = (SELECT avatar FROM user WHERE id = ?)', array($username));
 			if(!($query->fetchColumn())) {
 				$url = "http://www.gravatar.com/avatar/" . md5(strtolower(trim($user->email)));
 				$url .= "?d=404";
 
-				$img = new Goteo\Model\Image( $url );
+				$img = new Base\Model\Image( $url );
 				$img->save();
 
 				if($img->id) {
-					Goteo\Core\Model::query("REPLACE user_image (user, image) VALUES (:user, :image)", array(':user' => $username, ':image' => $img->id));
-					Goteo\Core\Model::query("UPDATE user SET avatar = :avatar WHERE id = :user", array(':user'=>$username,':avatar'=>$img->id));
-					$user = Goteo\Model\User::get($username);
+					Base\Core\Model::query("UPDATE user SET avatar = :avatar WHERE id = :user", array(':user'=>$username,':avatar'=>$img->id));
+					$user = Base\Model\User::get($username);
 				}
 			}
 		}
@@ -572,33 +579,33 @@ class SocialAuth {
 
 			//Guardar en una cookie la preferencia de "login with"
 			//no servira para mostrar al usuario primeramente su opcion preferida
-			setcookie("goteo_oauth_provider",$this->original_provider,time() + 3600*24*365);
+			setcookie("booka_oauth_provider",$this->original_provider,time() + 3600*24*365);
 
 			if (!empty($_POST['return'])) {
-				throw new Goteo\Core\Redirection($_POST['return']);
+				throw new Base\Core\Redirection($_POST['return']);
 			} elseif (!empty($_SESSION['jumpto'])) {
 				$jumpto = $_SESSION['jumpto'];
 				unset($_SESSION['jumpto']);
-				throw new Goteo\Core\Redirection($jumpto);
+				throw new Base\Core\Redirection($jumpto);
 			} else {
-				throw new Goteo\Core\Redirection('/dashboard');
+				throw new Base\Core\Redirection('/dashboard');
 			}
 	}
 
 	/**
 	 * Guarda los tokens generados en el usuario
 	 * */
-	public function saveTokensToUser($goteouser) {
-		$query = Goteo\Core\Model::query('SELECT id FROM user WHERE id = ?', array($goteouser));
+	public function saveTokensToUser($bookauser) {
+		$query = Base\Core\Model::query('SELECT id FROM user WHERE id = ?', array($bookauser));
 		if($id = $query->fetchColumn()) {
 			foreach($this->tokens as $provider => $token) {
 				if($token['token']) {
-					$query = Goteo\Core\Model::query("REPLACE user_login (user,provider,oauth_token,oauth_token_secret) VALUES (:user,:provider,:token,:secret)",array(':user'=>$goteouser,':provider'=>$provider,':token'=>$token['token'],':secret'=>$token['secret']));
+					$query = Base\Core\Model::query("REPLACE user_login (user,provider,oauth_token,oauth_token_secret) VALUES (:user,:provider,:token,:secret)",array(':user'=>$bookauser,':provider'=>$provider,':token'=>$token['token'],':secret'=>$token['secret']));
 				}
 			}
 		}
 		else {
-			$this->last_error = "oauth-goteo-user-not-exists";
+			$this->last_error = "oauth-user-not-exists";
 			return false;
 		}
 	}

@@ -1,0 +1,482 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* Estilos de elementos gráficos específicos */
+/* Barra de navegacion */
+div#navi-bar {
+    margin-bottom: 15px;    
+    width: 938px;
+}
+
+body.faq div#navi-bar,
+body.dashboard div#navi-bar,
+body.booka div.booka-form div#navi-bar {
+    margin-bottom: 0px;
+}
+
+
+div#navi-bar > ul > li > a:hover {
+    text-decoration: none;
+}
+
+div#navi-bar ul li.right{
+    float: right;
+    margin: 0 !important;
+    padding-right: 20px;
+}
+
+div#navi-bar ul li.right a.social-icon {
+    margin-right: 0px !important;
+    margin-left: 16px;
+}
+
+div#navi-bar ul.top {
+    padding-bottom: 5px;
+}
+
+div#navi-bar ul.down {
+    padding: 10px 0 10px 20px;
+}
+
+div#navi-bar ul.top li {
+    margin-left: 20px;
+    height: 15px;
+    overflow: hidden;
+}
+
+div#navi-bar ul.top li a {
+    font-family: 'Muli', sans-serif;
+}
+
+div#navi-bar ul.down li + li {
+    margin-left: 55px;
+}
+
+div#navi-bar ul.down li a {
+    font-size: 14px;
+}
+
+div#navi-bar ul.top li.active a,
+div#navi-bar ul.top li a:hover,
+div#navi-bar ul.top li.current a,
+div#navi-bar ul.top li.current a:hover {
+    color: #669999 !important;
+}
+
+div#navi-bar ul.top li.disabled a,
+div#navi-bar ul.top li.disabled a:hover {
+    cursor: default;
+}
+
+div#navi-bar ul.down li a {
+    color: #9F9E88;
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 1); 
+}
+
+div#navi-bar ul.down li.active a,
+div#navi-bar ul.down li a:hover,
+div#navi-bar ul.down li.current a,
+div#navi-bar ul.down li.current a:hover {
+    color: #333366 !important;
+}
+
+div#navi-bar ul.down li.disabled a,
+div#navi-bar ul.down li.disabled a:hover {
+    color: #9F9E88 !important;
+    cursor: default;
+}
+
+div#navi-bar ul.down li.right a {
+    padding: 3px 10px;
+    border-width: 0px 0px 0px 1px;
+    border-style: solid;
+    border-color: #CBC7A2;
+    /*
+    -webkit-box-shadow: 1px 0px 0px rgba(227, 224, 201, 1);
+    -moz-box-shadow:    1px 0px 0px rgba(227, 224, 201, 1);
+    box-shadow:         1px 0px 0px rgba(227, 224, 201, 1);    
+    */
+}
+
+/* fin barra navegacion */
+
+/* videos embedidos */
+.booka-media {
+    padding: 0 !important;
+    width: 550px !important;
+    height: 337px !important;
+    margin-bottom: 20px;
+}
+
+.booka-media iframe,
+.booka-media object,
+.booka-media embed {
+    width: 550px !important;
+    height: 337px !important;
+}
+
+/* Barra de compartir en: lista entradas blog, lista impulsados en perfil usuario, portada booka */
+ul.share {
+    float:right;
+    display: inline-block;
+    height: 30px;
+    margin-top: 6px;
+}
+
+ul.share li.link a {
+    padding-left: 20px;
+    padding-bottom: 2px;
+    background: url('/view/css/assets/link.png') no-repeat transparent 0px 0px;
+}
+
+ul.share li.socials a {
+    overflow: hidden;
+    padding-left: 30px;
+    padding-top: 5px;
+    padding-bottom: 10px;
+    line-height: 35px;
+}
+/* fin barra compartir */
+
+
+/* botones sociales */
+
+/* enlaces de un solo click */
+.social-button a {
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-image: url('/view/css/assets/social/sprite_big.png');
+}
+
+.social-button.active a {
+    text-decoration: none;
+    background-image: url('/view/css/assets/social/sprite_big_active.png');
+}
+
+.social-button.facebook a {
+    background-position: 0px 0px;
+}
+
+.social-button.twitter a {
+    background-position: 0px -56px;
+}
+
+.social-button.google a {
+    background-position: 0px -112px;
+}
+
+.social-button.linkedin a {
+    background-position: 0px -168px;
+} 
+
+/* los botones de compartir */
+a.social-button {
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-image: url('/view/css/assets/social/sprite.png');
+}
+
+a.social-button:hover {
+    text-decoration: none;
+    background-image: url('/view/css/assets/social/sprite_active.png');
+}
+
+a.social-button.facebook {
+    background-position: 0px 0px;
+}
+
+a.social-button.twitter {
+    background-position: -34px 0px;
+}
+
+a.social-button.google {
+    background-position: -68px 0px;
+}
+
+a.social-button.linkedin {
+    background-position: -102px 0px;
+}
+/* fin botones sociales */
+
+/* iconos sociales */
+ a.social-icon {
+    width: 12px;
+    display: inline-block;
+    text-indent: 100px;
+    overflow: hidden;
+    margin-right: 6px;
+    line-height: 14px;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-image: url('/view/css/assets/social/icons_sprite.png');
+}
+
+a.social-icon.facebook {
+    background-position: 0px 0px;
+}
+
+a.social-icon.facebook:hover {
+    background-position: 0px -14px;
+}
+
+a.social-icon.flickr {
+    background-position: -12px 0px;
+}
+
+a.social-icon.flickr:hover {
+    background-position: -12px -14px;
+}
+
+a.social-icon.vimeo {
+    background-position: -24px 0px;
+}
+
+a.social-icon.vimeo:hover {
+    background-position: -24px -14px;
+}
+
+a.social-icon.twitter {
+    background-position: -36px 0px;
+}
+
+a.social-icon.twitter:hover {
+    background-position: -36px -14px;
+}
+/* fin iconos sociales */
+
+
+/* circulitos de carrusel */
+ul.slide-ctrl {
+    display: inline-block;
+    list-style: none outside none;
+    margin: 0;
+    padding: 0;
+    z-index: 100;
+}
+ul.slide-ctrl li {
+    cursor: pointer;
+    display: block;
+    float: left;
+    margin: 0 4px 5px;
+    overflow: hidden;
+}
+ul.slide-ctrl li a {
+    display: block;
+    height: 10px;
+    width: 10px;
+    text-indent: 100px; 
+    border-radius: 100px 100px 100px 100px;
+    border-top: 1px solid #B5B5A9;
+/*    background-color: #E3E3D4; */
+    background-color: rgb(222, 222, 205);
+    background: -moz-linear-gradient(90deg, rgb(222, 222, 205) 29%, rgb(249, 248, 238) 82%);
+    background: -webkit-linear-gradient(90deg, rgb(222, 222, 205) 29%, rgb(249, 248, 238) 82%);
+    background: -o-linear-gradient(90deg, rgb(222, 222, 205) 29%, rgb(249, 248, 238) 82%);
+    background: -ms-linear-gradient(90deg, rgb(222, 222, 205) 29%, rgb(249, 248, 238) 82%);
+    background: linear-gradient(90deg, rgb(222, 222, 205) 29%, rgb(249, 248, 238) 82%);
+}
+ul.slide-ctrl li a:hover {
+/*    background-color: #AFAC8C; */
+    background-color: rgb(175, 172, 140);
+    background: -moz-linear-gradient(90deg, rgb(175, 172, 140) 29%, rgb(236, 232, 205) 82%);
+    background: -webkit-linear-gradient(90deg, rgb(175, 172, 140) 29%, rgb(236, 232, 205) 82%);
+    background: -o-linear-gradient(90deg, rgb(175, 172, 140) 29%, rgb(236, 232, 205) 82%);
+    background: -ms-linear-gradient(90deg, rgb(175, 172, 140) 29%, rgb(236, 232, 205) 82%);
+    background: linear-gradient(90deg, rgb(175, 172, 140) 29%, rgb(236, 232, 205) 82%);
+    
+}
+ul.slide-ctrl li.current a {
+/*    background-color: #65989A !important; */
+    background-color: rgb(101, 152, 154) !important;
+    background: -moz-linear-gradient(90deg, rgb(101, 152, 154) 29%, rgb(160, 197, 192) 82%) !important;
+    background: -webkit-linear-gradient(90deg, rgb(101, 152, 154) 29%, rgb(160, 197, 192) 82%) !important;
+    background: -o-linear-gradient(90deg, rgb(101, 152, 154) 29%, rgb(160, 197, 192) 82%) !important;
+    background: -ms-linear-gradient(90deg, rgb(101, 152, 154) 29%, rgb(160, 197, 192) 82%) !important;
+    background: linear-gradient(90deg, rgb(101, 152, 154) 29%, rgb(160, 197, 192) 82%) !important;
+    
+}
+/* fin circulitos carrusel */
+
+/* Mensaje aviso */
+div#advice{
+    background-color: #F6EBED; /*Rojo claro*/
+    color: #670817; /*rojo oscuro*/
+    padding: 20px 0;
+    width: 100%;
+    border: 2px solid #670817;
+}
+div#advice div#advice-content{width:940px;margin:0 auto;position:relative;}
+div#advice div#advice-content input.advice-close{ background:url('/view/css/assets/buttons/message-close.png') no-repeat; width:34px;height:33px;border:none;position:absolute;top:-8px;right:0;z-index:100; cursor:pointer;}
+div#advice div#advice-content ul{list-style:none;margin:0;padding:0;}
+div#advice div#advice-content ul li{line-height: 14px;}
+div#advice div#advice-content ul li span{color: #670817;}
+div#advice * {
+    background-color: inherit;
+}
+/* end mensaje aviso */
+
+/* caja de comentarios */
+div#send-msg {
+    position: relative;
+    z-index: 0;
+    background: url('/view/css/assets/bocadillo/normal.png') no-repeat left 25px;
+    padding-left: 70px;
+}
+
+div#send-msg.active {
+    background: url('/view/css/assets/bocadillo/active.png') no-repeat left 25px;
+}
+
+div#send-msg h5 {
+    margin-bottom: 12px !important;
+}
+
+div#send-msg textarea {
+    margin-bottom: 10px;
+}
+ul#pagination li {
+    display:inline;
+    margin: 0 6px 0 0;
+    width: auto;
+    float: left;
+    text-align: center;
+}
+ul#pagination li.selected {
+    padding: 6px 20px;
+}
+ul#pagination li.hellip {
+    padding: 6px 20px;
+}
+ul#pagination li a {
+    display: block;
+    padding: 6px 20px;
+}
+ul#pagination li a:hover {
+    background:#F3F3F3;
+}
+** end of pagination **/
+
+/** barra de paginación, especial para portada de blog **/
+div.results-bar {
+    width: 560px;
+}
+
+body.blog div.results-bar {
+    width: 595px !important;
+    margin-top: -10px;
+}
+
+div.results-bar span {
+    float:left;
+}
+
+body.blog div.results-bar ul.page-control {
+    float:none !important;
+}
+
+body.blog div.results-bar ul.page-control li + li {
+    float: right;
+}
+
+div.results-bar ul.page-control {
+    float: right;
+}
+div.results-bar ul.page-control li a {
+    line-height: 10px;
+}
+
+/* Flechitas de anterior, siguiente no se usan mas
+*** // a la mierd, no se usa
+div.results-bar ul.page-control li a.go,
+div.results-bar ul.page-control li a.back {
+    overflow: hidden;
+    border: none !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat;
+    margin-left: 30px;
+    text-indent: 100px; 
+    vertical-align: bottom;
+}
+
+div.results-bar ul.page-control li a.go:hover,
+div.results-bar ul.page-control li a.back:hover {
+    text-decoration: none;
+}
+
+// Flechita forward derecha, por defecto 
+div.results-bar ul.page-control li a.go {
+    background-image: url('/view/css/assets/arrows/go.png');
+    background-position: right 2px;
+    padding-right: 10px;
+}
+// y el correspondiente rollover, flechita negra 
+div.results-bar ul.page-control li a.go:hover {
+    background-position: right -13px;
+    cursor: pointer;
+}
+// Flechita backward izquierda 
+div.results-bar ul.page-control li a.back {
+    background-image: url('/view/css/assets/arrows/back.png');
+    background-position: 0px 2px;
+    padding-left: 10px;
+}
+// y el correspondiente rollover 
+div.results-bar ul.page-control li a.back:hover {
+    background-position: 0px -13px !important;
+}
+este es el fin de las flechitas en imagen */
+
+/* anterior siguiente */
+div.results-bar ul.page-control li a.next-page,
+div.results-bar ul.page-control li a.prev-page {
+    text-decoration: none;
+    margin-left: 30px;
+}
+
+div.results-bar ul.page-control li a.ct2.next-page:hover,
+div.results-bar ul.page-control li a.ct2.prev-page:hover {
+    text-decoration: none;
+    color: #669999 !important;
+}
+
+div.results-bar ul.page-control li a.ct3.next-page:hover,
+div.results-bar ul.page-control li a.ct3.prev-page:hover {
+    text-decoration: underline !important;
+}
+/** fin de barra de paginación **/
+
+/* = enlace para volver arriba
+*******************************
+a.up{display:inline-block;padding-left:15px;margin-left:18px; background:url('/view/css/arrow-up3.png') no-repeat left; line-height: 20px;
+	font-size: 10px;
+	text-decoration: none;
+	color: #9f9f9f;
+	margin-bottom: 40px;
+}
+a.up:hover{background:url('/view/css/arrows/up.png') no-repeat left;
+	color: #20b3b2;
+}
+*/
+
+/* +info *
+div.read_more {
+    text-align: right;
+    margin-top: 16px;
+}
+** end +info **/
+

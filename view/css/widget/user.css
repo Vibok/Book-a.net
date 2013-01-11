@@ -1,0 +1,79 @@
+/*
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
+ *	This file is part of Goteo.
+ *
+ *  Goteo is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Goteo is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with Goteo.  If not, see <http://www.gnu.org/licenses/agpl.txt>.
+ *
+ */
+/* Estilos específicos de widget de usuario */
+div.user-widget-investor {
+    width: 252px;
+    height: 60px;
+    padding: 10px 0;
+}
+
+div.user-widget-investor div.avatar,
+div.user-widget-investor div.content {
+    float:left;
+}
+
+div.user-widget-investor div.avatar {
+    margin-right: 10px;
+    width: 60px;
+}
+
+div.user-widget-investor div.content {
+    width: 182px;
+    max-height: 70px;
+    overflow: hidden;
+}
+
+div.user-widget-investor div.content.sharemate {
+    height: 60px;
+    width: 181px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+div.user-widget-investor div.content.sharemate div.interests {
+    line-height: 15px;
+}
+
+div.user-widget-investor div.content span.user {
+    height: 13px;
+    overflow: hidden;
+    margin-bottom: 1px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+div.user-widget-investor div.content span.user a:hover {
+    text-decoration: underline;
+}
+
+div.user-widget-investor div.content span.date {
+    margin-bottom: 6px;
+}
+
+div.user-widget-investor div.content div.invest {
+    margin-top: 3px;
+}
+
+div.user-widget-investor div.content div.invests-num {
+    position: relative;
+    top: -40px;
+    left: 115px;
+    width: 65px;
+    text-align: right;
+}

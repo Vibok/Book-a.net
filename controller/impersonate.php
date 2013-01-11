@@ -18,17 +18,15 @@
  *
  */
 
+namespace Base\Controller {
 
-namespace Goteo\Controller {
+	use Base\Core\Redirection,
+        Base\Core\Error,
+        Base\Core\View,
+        Base\Library\Advice,
+		Base\Model\User;
 
-	use Goteo\Core\Redirection,
-        Goteo\Core\Error,
-        Goteo\Core\View,
-        Goteo\Library\Feed,
-        Goteo\Library\Message,
-		Goteo\Model\User;
-
-	class Impersonate extends \Goteo\Core\Controller {
+	class Impersonate extends \Base\Core\Controller {
 
 	    /**
 	     * Suplantando al usuario
@@ -40,33 +38,19 @@ namespace Goteo\Controller {
 
             if ($_SERVER['REQUEST_METHOD'] === 'POST' 
                 && !empty($_POST['id'])
-                && !empty($_POST['impersonate'])
-                && $_SESSION['user'] = User::get($_POST['id'])) {
+                && !empty($_POST['impersonate'])) {
 
-                /*
-                 * Evento Feed
-                 */
-                $log = new Feed();
-                $log->title = 'Suplantación usuario (admin)';
-                $log->url = '/admin/users';
-                $log->type = 'user';
-                $log_text = 'El admin %s ha %s al usuario %s';
-                $log_items = array(
-                    Feed::item('user', $admin->name, $admin->id),
-                    Feed::item('relevant', 'Suplantado'),
-                    Feed::item('user', $_SESSION['user']->name, $_SESSION['user']->id)
-                );
-                $log->html = \vsprintf($log_text, $log_items);
-                $log->add($errors);
-
-                unset($log);
-
-
+                // eliminamos todos los datos de session
+                session_unset();
+                
+                // rellenamos de nuevo la sesión
+                $_SESSION['user'] = User::get($_POST['id']);
+                
                 throw new Redirection('/dashboard');
                 
             }
             else {
-                Message::Error('Ha ocurrido un error');
+                Advice::Error('Ha ocurrido un error');
                 throw new Redirection('/dashboard');
             }
 		}

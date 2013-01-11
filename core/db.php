@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright (C) 2012 Platoniq y FundaciÃ³n Fuentes Abiertas (see README for details)
+ *  Copyright (C) 2012 Platoniq y Fundación Fuentes Abiertas (see README for details)
  *	This file is part of Goteo.
  *
  *  Goteo is free software: you can redistribute it and/or modify
@@ -18,28 +18,34 @@
  *
  */
 
-
-namespace Goteo\Core {
+namespace Base\Core {
 
     class DB extends \PDO {
 
         public function __construct() {
 
-            $dsn = \GOTEO_DB_DRIVER . ':host=' . \GOTEO_DB_HOST . ';dbname=' . \GOTEO_DB_SCHEMA;
+try {
 
-            if (defined('GOTEO_DB_PORT')) {
-                $dsn .= ';port=' . \GOTEO_DB_PORT;
+            $dsn = \CONF_DB_DRIVER . ':host=' . \CONF_DB_HOST . ';dbname=' . \CONF_DB_SCHEMA;
+
+            if (defined('CONF_DB_PORT')) {
+                $dsn .= ';port=' . \CONF_DB_PORT;
             }
 
             //If you use the UTF-8 encoding, you have to use the fourth parameter :
-            if (defined('GOTEO_DB_CHARSET') && GOTEO_DB_DRIVER == 'mysql') {
-                parent::__construct($dsn, \GOTEO_DB_USERNAME, \GOTEO_DB_PASSWORD, array(\PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES UTF8"));
+            if (defined('CONF_DB_CHARSET') && CONF_DB_DRIVER == 'mysql') {
+                parent::__construct($dsn, \CONF_DB_USERNAME, \CONF_DB_PASSWORD, array(\PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES UTF8"));
             }
 			else {
-				parent::__construct($dsn, \GOTEO_DB_USERNAME, \GOTEO_DB_PASSWORD);
+				parent::__construct($dsn, \CONF_DB_USERNAME, \CONF_DB_PASSWORD);
 			}
 
             $this->setAttribute(static::ATTR_ERRMODE, static::ERRMODE_EXCEPTION);
+} catch (\PDOException $e) {
+die ('Estamos teniendo problemas tecnicos, disculpen las molestias');
+}
+
+
         }
 
     }
